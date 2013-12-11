@@ -24,18 +24,18 @@ const char sTime[]         PROGMEM  = "START_TIME";
 
 /* Variables to store in the NoSQL Database */
 
-prog_char deviceID[] PROGMEM = "{\"deviceID\":\"";
-prog_char device_type[] PROGMEM = "\",\"device_type\":\"";
-prog_char date[] PROGMEM = "\",\"date\":\"";
-prog_char timeSecs[] PROGMEM = "\",\"time_secs\":\"";
-prog_char consumption_type[] PROGMEM = "\",\"consumption_type\":\"";
-prog_char consumption_time_in_secs[] PROGMEM = "\",\"consumption_time_in_secs\":";
-prog_char energy_consumption_Wh[] PROGMEM = ",\"energy_consumption_Wh\":";
-prog_char user_ID[] PROGMEM = ",\"userID\":\"";
-prog_char endTerm[] PROGMEM = "\"}";
+const prog_char deviceID[] PROGMEM = "{\"deviceID\":\"";
+const prog_char device_type[] PROGMEM = "\",\"device_type\":\"";
+const prog_char date[] PROGMEM = "\",\"date\":\"";
+const prog_char timeSecs[] PROGMEM = "\",\"time_secs\":\"";
+const prog_char consumption_type[] PROGMEM = "\",\"consumption_type\":\"";
+const prog_char consumption_time_in_secs[] PROGMEM = "\",\"consumption_time_in_secs\":";
+const prog_char energy_consumption_Wh[] PROGMEM = ",\"energy_consumption_Wh\":";
+const prog_char user_ID[] PROGMEM = ",\"userID\":\"";
+const prog_char endTerm[] PROGMEM = "\"}";
 
 
-PROGMEM const char *json_properties[] = 	 
+const char * const json_properties[] PROGMEM = 	 
 {   
   deviceID,
   device_type,
