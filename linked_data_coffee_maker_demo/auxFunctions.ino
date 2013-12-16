@@ -182,7 +182,6 @@ char * floatToString(char * outstr, double val, byte precision, byte widthp){
     strcat(temp,outstr);
     strcpy(outstr,temp);
   }
-  
   return outstr;
 } 
 
@@ -221,6 +220,7 @@ void POSTrequest(char* deviceID, char* device_type, char* date, char* timeSecs, 
     
 
     int statusCode = client.post("/", postData, &response);
+    //int statusCode = 1;
     #if ECHO_TO_SERIAL  
       Serial.println(postData);
       Serial.print("Status code from server: ");

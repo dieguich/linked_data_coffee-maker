@@ -161,6 +161,7 @@ void loop() {
   if (isStable){
    controlCoffeMade(currentToMeasure); // to read the the RMS current flow [0..30A]
    if (Serial3.available() > 0) {
+     Serial.println("RFID");
      rfidReadMug();
    }
    else if(!prevWasCoffee && (millis() > timeRfidDetected + 120000)){

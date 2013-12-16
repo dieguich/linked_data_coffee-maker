@@ -7,17 +7,18 @@ unsigned long lastPeak          = 0;        // this variable is to store when th
 unsigned long timeCount         = 0;        // the timestamp to store the begining of a peak, coffee or S. Time.
 unsigned long totalTimeOn       = 0;        // the time that the coffee machine was operating (during the cicle of 24h)
 
+/* Vars to store info in the DDBB*/
+char  dateDB[50];
+char  timeDB[20];
+char  consumptionWhDB[10];
+
 /** 
   This function controls when the coffee machine is operating. Not matter if is a peak, start time or coffee.
   Inside this, the function writes in the SD the current measured values and the relative time-stamp when those are sensed
   Finally it writes the type of peak detected and the time spend reading such a peak.
 **/
 void controlCoffeMade(float readCurrentValue){  
-  
-  char  dateDB[50];
-  char  timeDB[20];
-  char  consumptionWhDB[10];
-  
+
   // if the machine is working (hot water) and it was idle in the previous loop.
   if((readCurrentValue > 0.2)){
     if ((!currentIsFlowing)){ 
@@ -50,7 +51,6 @@ void controlCoffeMade(float readCurrentValue){
   // if the machine is idle and it was working in the previous loop.  
   if((readCurrentValue <= 0.12) && (currentIsFlowing)){ 
       delay(1000);                     // wait a second to know if is a false stop 
-      
       if (emonInstance.calcIrms(EMON_INSTANCE_VALUE) <= 0.12){        
         currentIsFlowing = false;               // the state of the machine shift to idle
         timeOn = millis()-timeCount;        // compute the time used to prepare a coffee (2secons to establish the current to 0 after a hot drink made) 

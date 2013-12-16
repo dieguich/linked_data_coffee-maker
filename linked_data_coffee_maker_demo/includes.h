@@ -12,7 +12,7 @@
 
 #define DEVICE_TYPE             "COFFEE-MAKER"
 #define ECHO_TO_SERIAL          1                 // echo data to serial port (DEBUG mode)
-#define STATIC_IP_ADDRESS       1                 // Only if ethernet address is not DHCP enabled
+#define STATIC_IP_ADDRESS       0                 // Only if ethernet address is not DHCP enabled
 #define IP_DB_SERVER            "130.206.138.42"  //default IP server to store coffe maker's data
 #define PORT_DB_SERVER          57080
 
@@ -47,8 +47,6 @@ const char * const json_properties[] PROGMEM =
   user_ID,
   endTerm
 };
-
-
 
 /************************************   
  * Specific Methods declared in this sketch
