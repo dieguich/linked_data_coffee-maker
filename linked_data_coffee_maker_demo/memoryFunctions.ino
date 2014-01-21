@@ -59,4 +59,40 @@ void prinFromMemorySerial(const char *str){
   #endif
 }
 
+void initializeConfigFile(){
+  
+  SPI.begin();
+  if (!SD.begin(SD_SELECT))
+    while (1)
+#if ECHO_TO_SERIAL 
+      Serial.println("SD.begin() failed");
+#endif
+  if (!ini.open()) {
+#if ECHO_TO_SERIAL     
+    Serial.print("Ini file ");
+    Serial.print(filename);
+    Serial.println(" does not exist");
+#endif    
+    // Cannot do anything else
+    while (1);
+  }
+#if ECHO_TO_SERIAL     
+  Serial.println("Ini file exists");
+#endif
 
+  // Check the file is valid. This can be used to warn if any lines
+  // are longer than the buffer.
+  if (!ini.validate(bufferINIfile, bufferLen)) {
+#if ECHO_TO_SERIAL         
+    Serial.print("ini file ");
+    Serial.print(ini.getFilename());
+    Serial.print(" not valid: ");
+#endif    
+    while (1);  // Cannot do anything else
+  }
+  
+  if (ini.getValue("organisation", "locationID", bufferINIfile, bufferLen)) { 
+      memcpy(organisationID, 
+    }
+
+}

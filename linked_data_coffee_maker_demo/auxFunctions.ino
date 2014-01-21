@@ -185,54 +185,6 @@ char * floatToString(char * outstr, double val, byte precision, byte widthp){
   return outstr;
 } 
 
-/*****
-CouchDB
-*****/
-void POSTrequest(char* deviceID, char* device_type, char* date, char* timeSecs, char* consumption_type, char* consumption_time_in_secs, char* energy_consumption_Wh, char* coffeeMugID){
-
-    memset(postData, '\0', 400);
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[0])));
-    strcat(postData, buffer);
-    strcat(postData, deviceID);
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[1])));
-    strcat(postData, buffer);
-    strcat(postData, device_type);
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[2])));
-    strcat(postData, buffer);
-    strcat(postData, date);
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[3])));
-    strcat(postData, buffer);
-    strcat(postData, timeSecs);    
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[4])));
-    strcat(postData, buffer);
-    strcat(postData, consumption_type);
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[5])));
-    strcat(postData, buffer);
-    strcat(postData, consumption_time_in_secs);
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[6])));
-    strcat(postData, buffer);
-    strcat(postData, energy_consumption_Wh);
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[7])));
-    strcat(postData, buffer);
-    strcat(postData, coffeeMugID);    
-    strcpy_P(buffer, (char*)pgm_read_word(&(json_properties[8])));
-    strcat(postData, buffer);
-    
-
-    int statusCode = client.post("/", postData, &response);
-    //int statusCode = 1;
-    #if ECHO_TO_SERIAL  
-      Serial.println(postData);
-      Serial.print("Status code from server: ");
-      Serial.println(statusCode);
-      Serial.print("Response body from server: ");
-      Serial.println(response);
-    #endif
-   
-    memset(postData, '\0', 400);
-    memset(buffer, '\0', 30);
-    response = "";  
-}
 
 
 /**
@@ -292,7 +244,7 @@ void rfidReadMug(){
       if (bytesRead == 12) {           // if 12 digit read is complete
         tagValue[10] = '\0'; 
        
-        #if ECHO_TO_SERIAL
+      #if ECHO_TO_SERIAL
         Serial.print("5-byte code: ");
         for (i=0; i<5; i++) {
           if (code[i] < 16) Serial.print("0");
@@ -310,10 +262,44 @@ void rfidReadMug(){
             // Show the raw tag value
           Serial.print("VALUE_in_READING: ");
           Serial.println(tagValue);
-        #endif
+      #endif
         
       }
 
       bytesRead = 0;
     }
+}
+
+
+void copyToStruct(uint8_t* IPaddss){
+
+  uint8_t bufTemp[4]; 
+  for (int x = 1; x <= 4; x++) {
+    bufTemp[x] = strtoul(subStr(bufferINIfile, ".", x),NULL,0);
+    //Serial.println((bufTemp[x]));
+    IPaddss[x-1] = bufTemp[x];
+#if ECHO_TO_SERIAL     
+    Serial.print(IPaddss[x-1]);
+    Serial.print(".");
+#endif
+  }
+#if ECHO_TO_SERIAL       
+  Serial.println();
+#endif
+        
+}
+
+char* subStr(char* input_string, char *separator, int segment_number) {
+  
+  char *act, *sub, *ptr;
+  static char copy[20];
+  int i;
+  
+  strcpy(copy, input_string);
+  for (i = 1, act = copy; i <= segment_number; i++, act = NULL) {
+    
+    sub = strtok_r(act, separator, &ptr);
+    if (sub == NULL) break;
+  }
+  return sub;
 }

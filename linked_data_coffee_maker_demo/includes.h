@@ -1,4 +1,3 @@
-
 /****** DEFINES *******/
 #define DAY_IN_SECONDS          86400   // seconds in s 24h day 
 #define NTP_PACKET_SIZE         48      // NTP time stamp is in the first 48 bytes of the message
@@ -6,13 +5,17 @@
 #define CALIBRATION             20.5
 #define EMON_INSTANCE_VALUE     1000
 
+#define SD_SELECT               4        // The select pin used for the SD card
+#define ETHERNET_SELECT         10       // The select pin used for the SD card
+#define BUFFER_LENGTH           80       // The length of the buffer to read from the SD
+
 /****** TO FILL ******
  ****** ------- ******/
-#define ID                      ""   // Please, fill it with your organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.
+//#define ID                      ""   
 
 #define DEVICE_TYPE             "COFFEE-MAKER"
 #define ECHO_TO_SERIAL          1                 // echo data to serial port (DEBUG mode)
-#define STATIC_IP_ADDRESS       0                 // Only if ethernet address is not DHCP enabled
+#define STATIC_IP_ADDRESS       1                 // Only if ethernet address is not DHCP enabled
 #define IP_DB_SERVER            "130.206.138.42"  //default IP server to store coffe maker's data
 #define PORT_DB_SERVER          57080
 

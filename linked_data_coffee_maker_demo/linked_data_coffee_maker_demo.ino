@@ -2,15 +2,37 @@
 #include <avr/wdt.h> 
 #include <Udp.h>
 #include <RTClib.h>
+#include <IniFile.h>
 #include <string.h>
 
 #include <SPI.h>
 #include <Ethernet.h>
 #include <EEPROM.h>
 #include <Wire.h>
+#include <SD.h>
 #include "RestClient.h"
 #include "EmonLib.h"
 #include "includes.h"
+
+
+/** IP Addresses for Networking **/
+typedef struct{
+  uint8_t myIP[4]      = {};
+  uint8_t mySubnet[4]  = {};
+  uint8_t myGateway[4] = {};
+  uint8_t myDNS[4]     = {};
+} NetAddresses;
+
+byte mac[6] = {};
+NetAddresses myAddresses;
+
+
+/** Variables for accessing to INI file **/
+const char *filename   = "/conf.ini";
+const size_t bufferLen = BUFFER_LENGTH;
+char bufferINIfile[bufferLen];
+
+IniFile ini(filename);
 
 /*  Current */
 uint8_t        currentMeasurePin = A1;    // pin to measure the current flow
@@ -25,16 +47,11 @@ boolean       isStable           = false;
  
 /****** TO FILL ******
  ****** ------- ******/
-byte mac[]     = {  };  // Type your MAC address inside the curly brackets as following : 0x90, 0xA2, 0xDA, 0x0E, 0x94, 0x69 
+//byte mac[]     = {  };  // Type your MAC address inside the curly brackets as following : 0x90, 0xA2, 0xDA, 0x0E, 0x94, 0x69 
 
 /****** TO FILL ******
  ****** ------- ******/
-#if STATIC_IP_ADDRESS  
-  IPAddress dnsServer(138, 100, 52, 102); // Type your DNS address  inside the brackets as following :    138, 100, 52, 102
-  IPAddress gateway(138, 100, 52, 102);   // Type your GATEWAY address inside the brackets as following : 192, 168, 52, 101
-  IPAddress netmask(138, 100, 52, 102); // Type your NETMASK address inside the brackets as following :   255, 255, 255, 0
-  IPAddress ip(138, 100, 52, 102);      // Type your IP address inside the brackets as following :        192, 168, 52, 102
-#endif
+ 
 
 /*Related with NTP server and UDP setup for TxRx */
 unsigned long UnixTime          = 0;           // variable to store the Unix NTP time retrieved form NTP server
@@ -85,7 +102,7 @@ unsigned long countStart        = 0;        // to count when a peak has started
 /* NoSQL DataBase */
 String response   = "";
 char   postData[400];
-char   buffer[30];
+char   bufferNoSQL[30];
 char   consumptionSecsDB[10]; 
 char   consumptionTypeDB[20];
 
@@ -93,37 +110,44 @@ char   consumptionTypeDB[20];
 char tagValue[10];
 long timeRfidDetected = 0;
 
-
 /* LEDs to know the status */
 uint8_t readyPin = 7;
 uint8_t postPin  = 3;
+
+// Organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.
+char organisationID[20];
 
 /**********
   SETUP
 ***********/
 void setup() {
    
-   Serial3.begin(9600);
-   wdt_disable(); 
+  Serial3.begin(9600);
+  wdt_disable(); 
+  
 #if ECHO_TO_SERIAL  
-   Serial.begin(9600); 
-   Serial.println("Start");
+  Serial.begin(9600); 
+  Serial.println("Start");
 #endif
-    
-    pinMode(readyPin, OUTPUT);
-    pinMode(postPin,  OUTPUT);
-    pinMode(currentMeasurePin, INPUT);                    // sets the analog pin as input (current measure throug the coffe machine plug -mains)*/    
-    digitalWrite(readyPin,  LOW);
-    digitalWrite(postPin,   LOW);    
    
-   #if STATIC_IP_ADDRESS 
-     Ethernet.begin(mac, ip, dnsServer, gateway, netmask);  
-   #else
-     Ethernet.begin(mac);  
-   #endif
-   delay(100);
-   
-   getUnixTime();
+  /* Configure all of the SPI select pins as outputs and make SPI
+   devices inactive, otherwise the earlier init routines may fail
+   for devices which have not yet been configured.*/
+  pinMode(SD_SELECT, OUTPUT);
+  digitalWrite(SD_SELECT, HIGH);       // disable SD card
+  pinMode(ETHERNET_SELECT, OUTPUT);
+  digitalWrite(ETHERNET_SELECT, HIGH); // disable Ethernet 
+  
+  pinMode(readyPin, OUTPUT);
+  pinMode(postPin,  OUTPUT);
+  pinMode(currentMeasurePin, INPUT);   // sets the analog pin as input (current measure throug the coffe machine plug -mains)*/    
+  digitalWrite(readyPin,  LOW);
+  digitalWrite(postPin,   LOW);    
+  
+  initializeConfigFile();
+  setNetworkAddresses();
+  getUnixTime();
+  
 #if ECHO_TO_SERIAL  
   Serial.println(Ethernet.localIP()); 
   Serial.print("UnixTime provided by the UTP: ");  
@@ -143,6 +167,7 @@ void setup() {
   wdt_enable(WDTO_8S);
   
   digitalWrite(readyPin, HIGH);
+  while(1);
 }
 
 /***********
