@@ -8,6 +8,7 @@
 #define SD_SELECT               4        // The select pin used for the SD card
 #define ETHERNET_SELECT         10       // The select pin used for the SD card
 #define BUFFER_LENGTH           80       // The length of the buffer to read from the SD
+#define TIME30YEARS             946684800
 
 /****** TO FILL ******
  ****** ------- ******/
@@ -21,9 +22,9 @@
 
 
 /* Variables to store in the Flash memory (save SRAM space): PROGMEM */
-const char coffee[]        PROGMEM  = "COFFEE";
-const char peak[]          PROGMEM  = "STANDBY";
-const char sTime[]         PROGMEM  = "START_TIME";
+const char coffee[]          = "COFFEE";
+const char peak[]            = "STANDBY";
+const char sTime[]           = "START_TIME";
 
 /* Variables to store in the NoSQL Database */
 
@@ -66,11 +67,11 @@ unsigned long sendNTPpacket(byte *);
 unsigned long getTimefromNTP(byte* );
 unsigned int  printRelativeUnixTime(unsigned long);
 String        printDateTime(DateTime);
-char*         printDate(DateTime);
-char*        printTime(DateTime);
+char*         printDate();
+char*         printTime();
 
 
-void          prinFromMemorySerial(char *);
+void          prinType(char *);
 void          EEPROM_writelong(int , unsigned long );
 void          EEPROM_writeint(int , int );
 unsigned int  EEPROM_readint(int );

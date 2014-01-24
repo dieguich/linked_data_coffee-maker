@@ -5,11 +5,13 @@
 #include <IniFile.h>
 #include <string.h>
 
+#include <DS1307new.h>  //DS1307 Module
 #include <SPI.h>
 #include <Ethernet.h>
 #include <EEPROM.h>
 #include <Wire.h>
 #include <SD.h>
+
 #include "RestClient.h"
 #include "EmonLib.h"
 #include "includes.h"
@@ -27,10 +29,17 @@ byte mac[6] = {};
 NetAddresses myAddresses;
 
 
+/** Variables for accessing to RTC clock **/
+uint16_t startAddr = 0x0000;            // Start address to store in the NV-RAM
+uint16_t lastAddr;                      // new address for storing in NV-RAM
+uint16_t TimeIsSet = 0xaa55;            // Helper that time must not set again
+
+
 /** Variables for accessing to INI file **/
-const char *filename   = "/conf.ini";
-const size_t bufferLen = BUFFER_LENGTH;
-char bufferINIfile[bufferLen];
+const char *filename        = "/config.ini";
+const      size_t bufferLen = BUFFER_LENGTH;
+char       bufferINIfile[bufferLen];
+boolean    rtcOnTime        = false;
 
 IniFile ini(filename);
 
@@ -39,34 +48,16 @@ uint8_t        currentMeasurePin = A1;    // pin to measure the current flow
 uint8_t        buttonState       = 0;
 
 /* Time working */
-unsigned long currentTime        = 0;        //  to store the current UnixTime in each loop iteration (base: UnixTime + time consumed)
+unsigned long currentTime        = 0;          //  to store the current UnixTime in each loop iteration (base: UnixTime + time consumed)
 boolean       isStable           = false;
 
-/* Enter a MAC address and IP address for your controller below.
- The IP address will be dependent on your local network:*/
- 
-/****** TO FILL ******
- ****** ------- ******/
-//byte mac[]     = {  };  // Type your MAC address inside the curly brackets as following : 0x90, 0xA2, 0xDA, 0x0E, 0x94, 0x69 
-
-/****** TO FILL ******
- ****** ------- ******/
- 
-
 /*Related with NTP server and UDP setup for TxRx */
-unsigned long UnixTime          = 0;           // variable to store the Unix NTP time retrieved form NTP server
-unsigned long referenceUnixTime = 0;           // variable to store the reference Unix NTP time stored in EEPROM (0)
-
-/****** TO FILL ******
- ****** ------- ******/
-IPAddress timeServer(129, 6, 15, 28);            // By default Nist server. If you prefer a different UTP server (local or country) change it e.g.: 129, 6, 15, 28
-
-
+unsigned long UnixTime           = 0;          // variable to store the Unix NTP time retrieved form NTP server
 byte pb[NTP_PACKET_SIZE];                      // buffer to hold incoming and outgoing packets 
 EthernetUDP Udp;                               // A UDP instance to let us send and receive packets over UDP
 
 
-EnergyMonitor emonInstance;                    // A emonLib instance to read current Values fron current CT sensor
+EnergyMonitor emonInstance;                                    // A emonLib instance to read current Values fron current CT sensor
 RestClient client = RestClient(IP_DB_SERVER, PORT_DB_SERVER);  //Rest Client 
 
 /*Energy counters*/
@@ -82,9 +73,8 @@ uint8_t nLoopPower   = 0;           // iteration variable
 
 
 /* Time working */
-unsigned long referenceInMillis = 0;        // to store the time stamp when the Energy post was done
+//unsigned long referenceInMillis = 0;        // to store the time stamp when the Energy post was done
 unsigned long timeOn            = 0;        // the time that the coffee machine was operating (One hot drink!)
-unsigned int  nDays             = 0;        //  number of days the Arduino is active retrying data.
 
 
 /* Testers */
@@ -108,13 +98,14 @@ char   consumptionTypeDB[20];
 
 /* RFID tags */
 char tagValue[10];
-long timeRfidDetected = 0;
+boolean cardDetected = false;
+boolean cardInField  = 25;
 
 /* LEDs to know the status */
-uint8_t readyPin = 7;
-uint8_t postPin  = 3;
+uint8_t readyPin = 35;
+uint8_t postPin  = 34;
 
-// Organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.
+/* Organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.*/
 char organisationID[20];
 
 /**********
@@ -122,7 +113,7 @@ char organisationID[20];
 ***********/
 void setup() {
    
-  Serial3.begin(9600);
+  Serial1.begin(9600);
   wdt_disable(); 
   
 #if ECHO_TO_SERIAL  
@@ -130,6 +121,8 @@ void setup() {
   Serial.println("Start");
 #endif
    
+  //pinMode(2, INPUT);                    // Test of the SQW pin, D2 = INPUT
+  //digitalWrite(2, HIGH);                // Test of the SQW pin, D2 = Pullup on
   /* Configure all of the SPI select pins as outputs and make SPI
    devices inactive, otherwise the earlier init routines may fail
    for devices which have not yet been configured.*/
@@ -140,34 +133,35 @@ void setup() {
   
   pinMode(readyPin, OUTPUT);
   pinMode(postPin,  OUTPUT);
-  pinMode(currentMeasurePin, INPUT);   // sets the analog pin as input (current measure throug the coffe machine plug -mains)*/    
+  pinMode(currentMeasurePin, INPUT);   // sets the analog pin as input (current measure throug the coffe machine plug -mains)*/   
+  pinMode(cardInField, INPUT); 
   digitalWrite(readyPin,  LOW);
   digitalWrite(postPin,   LOW);    
-  
   initializeConfigFile();
   setNetworkAddresses();
   getUnixTime();
+  if(!rtcOnTime){
+    setRTCTime();
+  }
+  
   
 #if ECHO_TO_SERIAL  
   Serial.println(Ethernet.localIP()); 
-  Serial.print("UnixTime provided by the UTP: ");  
-  Serial.println(UnixTime);
-  Serial.print("UnixTime converted in human readable time: ");    
-  Serial.println(printDateTime(UnixTime));
+  Serial.print("Time provided by the RTC and UTP: ");  
+  getRTCtime();
 #endif 
 
-  referenceUnixTime = UnixTime;
+  //referenceUnixTime = UnixTime;
   
 #if ECHO_TO_SERIAL  
    Serial.println("Working");
 #endif
   
   emonInstance.current(currentMeasurePin, CALIBRATION); // sets the Pin from and the calibration to read current Values.
-  referenceInMillis = millis();                         // timeStamp to know when the current program start.
+  //referenceInMillis = millis();                         // timeStamp to know when the current program start.
   wdt_enable(WDTO_8S);
   
   digitalWrite(readyPin, HIGH);
-  while(1);
 }
 
 /***********
@@ -176,20 +170,27 @@ void setup() {
 void loop() {
    
   wdt_reset(); 
-  currentTime = UnixTime + ((millis()-referenceInMillis)/1000);
+  //currentTime = UnixTime + ((millis()-referenceInMillis)/1000);
   delay(25);
   
   float currentToMeasure = emonInstance.calcIrms(EMON_INSTANCE_VALUE);
-  if (isStable == false && currentToMeasure < 0.1){
+  //Serial.println(currentToMeasure);
+  if (isStable == false && currentToMeasure < 0.40){
+    Serial.println("INSIDE STABLE");
     isStable = true;
+    delay(200);
   }
   if (isStable){
-   controlCoffeMade(currentToMeasure); // to read the the RMS current flow [0..30A]
-   if (Serial3.available() > 0) {
-     rfidReadMug();
-   }
-   else if(!prevWasCoffee && (millis() > timeRfidDetected + 120000)){
-     memset(tagValue, '\0', 10);
-   }
+    controlCoffeMade(currentToMeasure); // to read the the RMS current flow [0..30A]
+    if(cardDetected && digitalRead(cardInField) == 0){
+      delay(200);
+      if(digitalRead(cardInField) == 0){
+        cardDetected = false;
+        memset(tagValue, '\0', 10);
+      }
+    }
+    if (Serial1.available() > 0) {
+      rfidReadMug();
+    }
   }
 }

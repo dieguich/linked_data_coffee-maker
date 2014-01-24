@@ -53,17 +53,17 @@ int setType(){
       nSTimes++;
       prevWasCoffee = false;        
       nType = 2;           
-      prinFromMemorySerial(sTime);         
+      printType(sTime);         
     }
     else if(millis() < countStart){
-      if(timeOn > 12000){    
-        prinFromMemorySerial(coffee);
+      if(timeOn > 12000){ 
+        printType(coffee);        
         nCoffees++;
         prevWasCoffee = true;
         isStartTime = false;
         nType = 1;
       }else{  
-        prinFromMemorySerial(sTime);               
+        printType(sTime);               
         nSTimes++;
         prevWasCoffee = false;        
         nType = 2;
@@ -71,13 +71,13 @@ int setType(){
     }
     else{
       isStartTime = false;
-      if(timeOn > 7000 && !prevWasCoffee){
-        prinFromMemorySerial(coffee);
+      if(timeOn > 7000 && !prevWasCoffee){   
+        printType(coffee);        
         prevWasCoffee = true;
         nCoffees++;
         nType = 1;         
       }else{      
-        prinFromMemorySerial(peak);   
+        printType(peak);   
         nSByPeaks++;
         prevWasCoffee = false;        
         nType = 3;
@@ -85,13 +85,13 @@ int setType(){
     }
   }
   else if(timeOn > 7000){  // if the operating time is bigger than 7secs is a coffee REMOVED:  && !prevWasCoffee
-    prinFromMemorySerial(coffee);
+    printType(coffee);
     prevWasCoffee = true;    
     nCoffees++;
     nType = 1;
   }
   else{
-    prinFromMemorySerial(peak);
+    printType(peak);
     nSByPeaks++;
     prevWasCoffee = false;            
     nType = 3;
@@ -199,17 +199,19 @@ void rfidReadMug(){
   byte bytesRead = 0;
   byte tempbyte = 0;
   
-  if((val = Serial3.read()) == 2) {                  // check for header 
-      memset(tagValue, '\0', 10);
-      timeRfidDetected = millis();
+  char * tagValueTemp;
+  
+  if((val = Serial1.read()) == 2) {                  // check for header 
+      //memset(tagValue, '\0', 10);
+      tagValueTemp = (char*) malloc(10);
       //Serial.println("RFID cleared");
       bytesRead = 0; 
       while (bytesRead < 12) {                        // read 10 digit code + 2 digit checksum
-        if( Serial3.available() > 0) { 
-          val = Serial3.read();
+        if( Serial1.available() > 0) { 
+          val = Serial1.read();
           if (bytesRead < 10)
           {
-            tagValue[bytesRead] = val;
+            tagValueTemp[bytesRead] = val;
           }
           if((val == 0x0D)||(val == 0x0A)||(val == 0x03)||(val == 0x02)) { // if header or stop bytes before the 10 digit reading 
             break;                                    // stop reading
@@ -242,7 +244,7 @@ void rfidReadMug(){
       // Output to Serial:
 
       if (bytesRead == 12) {           // if 12 digit read is complete
-        tagValue[10] = '\0'; 
+        tagValueTemp[10] = '\0'; 
        
       #if ECHO_TO_SERIAL
         Serial.print("5-byte code: ");
@@ -261,9 +263,11 @@ void rfidReadMug(){
           
             // Show the raw tag value
           Serial.print("VALUE_in_READING: ");
-          Serial.println(tagValue);
+          Serial.println(tagValueTemp);
       #endif
-        
+        strcpy(tagValue, tagValueTemp);
+        free(tagValueTemp);
+        cardDetected = true;
       }
 
       bytesRead = 0;

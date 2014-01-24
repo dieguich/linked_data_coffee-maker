@@ -9,9 +9,12 @@ void getUnixTime(){
   int udpTimes = 0;
   
   Udp.begin(UDP_PORT);
-  
+  IPAddress ntpToGetTime = getNTPAddress();
+  //IPAddress ntpToGetTime(10,12,0,6);
+
+  delay(100);
   while(!Udp.available()) {
-    sendNTPpacket(timeServer);  // send an NTP packet to a time server
+    sendNTPpacket(ntpToGetTime);  // send an NTP packet to a time server
     delay(1000);                // wait to see if a reply is available
     udpTimes++;
     if(udpTimes > 10)
@@ -28,7 +31,14 @@ void getUnixTime(){
     Serial.println("no-time obtained");
     numOfUnixTime++;
     if (numOfUnixTime > 2){
-      UnixTime = referenceUnixTime - DAY_IN_SECONDS;
+      RTC.getTime();
+      if(RTC.year < 2014){
+        UnixTime = TIME30YEARS;
+      }
+      else{
+        rtcOnTime = true;
+      }
+      
     }
     else{
       getUnixTime();
@@ -94,46 +104,130 @@ unsigned long getTimefromNTP(byte* pb){
     return t4;
 }
 
-/**
-  Returns the date and time in the format yyyy-mm-dd hh:mm:ss
-**/
-String printDateTime(DateTime t)
-{
-    char datestr[24];
-    
-    sprintf(datestr, "%04d-%02d-%02d  %02d:%02d:%02d  ", t.year(), t.month(), t.day(), t.hour(), t.minute(), t.second());  
-    return datestr;
-}
 
 /**
   Returns the date in the format dataset/yyyymmdd.txt where dataset is the folder where the txt are stored and yyyymmdd is the
   date when the file was created
 **/
-char* printDate(DateTime t)
+char* printDate()
 {
     char datestr[30];
     
-    sprintf(datestr, "%04d-%02d-%02d", t.year(), t.month(), t.day()); 
+    sprintf(datestr, "%04d-%02d-%02d", RTC.year, RTC.month, RTC.day); 
     return datestr;
 }
 
 /**
   Returns the time in the format hh:mm:ss
 **/
-char* printTime(DateTime t)
+char* printTime()
 {
     char datestr[8];
     
-    sprintf(datestr, "%02d:%02d:%02d", t.hour(), t.minute(), t.second());  
+    sprintf(datestr, "%02d:%02d:%02d", RTC.hour, RTC.minute, RTC.second);  
     return datestr;
 }
 
-
 /**
-  Function used to convert from the time when the program started to the first time to a relative to the current day 
-  (in seconds: oo:oo:oo == 0, o1:oo:oo == 3600 ans so forth)
 **/
 
-unsigned int printRelativeUnixTime(unsigned long timeToConvert){
-  return ((timeToConvert-referenceInMillis)/1000);
+void setRTCTime(){
+  
+  RTC.setRAM(0, (uint8_t *)&startAddr, sizeof(uint16_t));// Store startAddr in NV-RAM address 0x08  
+  TimeIsSet = 0xffff;
+  RTC.setRAM(54, (uint8_t *)&TimeIsSet, sizeof(uint16_t));  
+  RTC.getRAM(54, (uint8_t *)&TimeIsSet, sizeof(uint16_t));
+  if (TimeIsSet != 0xaa55)
+  {
+    RTC.stopClock();
+        
+    RTC.fillByTime2000(UnixTime-TIME30YEARS);
+    
+    RTC.setTime();
+    TimeIsSet = 0xaa55;
+    RTC.setRAM(54, (uint8_t *)&TimeIsSet, sizeof(uint16_t));
+    RTC.startClock();
+  }
+}
+
+void getRTCtime(){
+  
+  RTC.getTime();
+  if (RTC.hour < 10)                    // correct hour if necessary
+  {
+    Serial.print("0");
+    Serial.print(RTC.hour, DEC);
+  } 
+  else
+  {
+    Serial.print(RTC.hour, DEC);
+  }
+  Serial.print(":");
+  if (RTC.minute < 10)                  // correct minute if necessary
+  {
+    Serial.print("0");
+    Serial.print(RTC.minute, DEC);
+  }
+  else
+  {
+    Serial.print(RTC.minute, DEC);
+  }
+  Serial.print(":");
+  if (RTC.second < 10)                  // correct second if necessary
+  {
+    Serial.print("0");
+    Serial.print(RTC.second, DEC);
+  }
+  else
+  {
+    Serial.print(RTC.second, DEC);
+  }
+  Serial.print(" ");
+  if (RTC.day < 10)                    // correct date if necessary
+  {
+    Serial.print("0");
+    Serial.print(RTC.day, DEC);
+  }
+  else
+  {
+    Serial.print(RTC.day, DEC);
+  }
+  Serial.print("-");
+  if (RTC.month < 10)                   // correct month if necessary
+  {
+    Serial.print("0");
+    Serial.print(RTC.month, DEC);
+  }
+  else
+  {
+    Serial.print(RTC.month, DEC);
+  }
+  Serial.print("-");
+  Serial.print(RTC.year, DEC);          // Year need not to be changed
+  Serial.print(" ");
+  switch (RTC.dow)                      // Friendly printout the weekday
+  {
+    case 1:
+      Serial.print("MON");
+      break;
+    case 2:
+      Serial.print("TUE");
+      break;
+    case 3:
+      Serial.print("WED");
+      break;
+    case 4:
+      Serial.print("THU");
+      break;
+    case 5:
+      Serial.print("FRI");
+      break;
+    case 6:
+      Serial.print("SAT");
+      break;
+    case 7:
+      Serial.print("SUN");
+      break;
+  }
+  Serial.println();
 }

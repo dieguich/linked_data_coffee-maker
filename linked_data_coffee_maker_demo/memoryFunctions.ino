@@ -43,16 +43,15 @@ unsigned int EEPROM_readint(int address) {
 /**
   print a char * stored in Flash Memory (instead of SRAM) to the Serial output
 **/
-void prinFromMemorySerial(const char *str){
+void printType(const char *str){
   
-  char *mem = (char *)str;
-  int i = 0;
-  
+  Serial.print("This is the type: ");
+  Serial.print(str);
+  Serial.print("This is the legth: ");  
+  Serial.print(strlen(str));  
   memset(consumptionTypeDB, '\0', 20);
-  while (pgm_read_byte(mem) != 0x00){ /* Comparamos con \0, un terminador */
-      consumptionTypeDB[i++] = (char)pgm_read_byte(mem++);
-  }
-
+  strcpy(consumptionTypeDB, str);
+  //consumptionTypeDB[strlen(str)] = '\0';
   #if ECHO_TO_SERIAL         
     Serial.print(consumptionTypeDB);
     Serial.print('|');
@@ -92,7 +91,7 @@ void initializeConfigFile(){
   }
   
   if (ini.getValue("organisation", "locationID", bufferINIfile, bufferLen)) { 
-      memcpy(organisationID, 
-    }
+      strcpy(organisationID, bufferINIfile);
+  }
 
 }
