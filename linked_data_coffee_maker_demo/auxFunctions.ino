@@ -237,7 +237,7 @@ void rfidReadMug(){
             tempbyte = val;                           // Store the first hex digit first...
           };
 
-          bytesRead++;                                // ready to read next digit
+          bytesRead++;          // ready to read next digit
         } 
       } 
 

@@ -71,14 +71,14 @@ void controlCoffeMade(float readCurrentValue){
           if(strlen(tagValue) > 10){
             tagValue[10] = '\0';
           }   
-          //POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, tagValue);
+          POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, tagValue);
           Serial.print("send: ");
           Serial.println(tagValue);          
         }
         else{
           Serial.print("send: ");
           Serial.println("-");
-          //POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, "-");
+          POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, "-");
         }
         auxEnergy = 0.0;              
         timeOn  = timeCount = nLoopPower = 0;

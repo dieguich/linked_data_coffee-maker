@@ -94,7 +94,7 @@ String response   = "";
 char   postData[400];
 char   bufferNoSQL[30];
 char   consumptionSecsDB[10]; 
-char   consumptionTypeDB[20];
+char   consumptionTypeDB[10];
 
 /* RFID tags */
 char tagValue[10];

@@ -44,14 +44,10 @@ unsigned int EEPROM_readint(int address) {
   print a char * stored in Flash Memory (instead of SRAM) to the Serial output
 **/
 void printType(const char *str){
-  
-  Serial.print("This is the type: ");
-  Serial.print(str);
-  Serial.print("This is the legth: ");  
-  Serial.print(strlen(str));  
-  memset(consumptionTypeDB, '\0', 20);
+ 
+  memset(consumptionTypeDB, '\0', 10);
   strcpy(consumptionTypeDB, str);
-  //consumptionTypeDB[strlen(str)] = '\0';
+  consumptionTypeDB[20] = '\0';
   #if ECHO_TO_SERIAL         
     Serial.print(consumptionTypeDB);
     Serial.print('|');
