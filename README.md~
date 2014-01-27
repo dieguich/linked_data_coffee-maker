@@ -13,8 +13,6 @@ This project has some external dependencies. All of them are stored in other git
 	*  EmonLib:    https://github.com/openenergymonitor/EmonLib
 	*  RestClient: https://github.com/csquared/arduino-restclient
 		- This library has been slightly modified, so please use the version which is provided in this github repository.
-	*  IniFile:    https://github.com/stevemarple/IniFile
-	*  ds1307new:  https://code.google.com/p/ds1307new/
 
 To add them to you Arduino IDE you have two options: 
 	- Either you store them in the libraries folder within the place where you installed the Arduino application; 
