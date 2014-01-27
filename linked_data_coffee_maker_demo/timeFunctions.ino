@@ -1,29 +1,28 @@
 
-int numOfUnixTime = 0;
 /** 
-  send an NTP request to the time server at the given address 
-  NTP requests are to port 123
+  This functions retrieves the UnixTime from a server specified in the SD config file.
+  If it fails, the time is set form the RTC or ultimately set as 01/01/2000
 **/
 void getUnixTime(){
   
   int udpTimes = 0;
   
-  Udp.begin(UDP_PORT);
+  udp.begin(UDP_PORT);
   IPAddress ntpToGetTime = getNTPAddress();
   //IPAddress ntpToGetTime(10,12,0,6);
 
   delay(100);
-  while(!Udp.available()) {
+  while(!udp.available()) {
     sendNTPpacket(ntpToGetTime);  // send an NTP packet to a time server
     delay(1000);                // wait to see if a reply is available
     udpTimes++;
     if(udpTimes > 10)
       break;
   }
-  if ( Udp.parsePacket() ) {  
-    Udp.read(pb,NTP_PACKET_SIZE);  // read the packet into the buffer
-    UnixTime = getTimefromNTP(pb); //if the time provided by the UTP server is different to yours, please add or subtract the corresponding hours in secs, e.g. UnixTime+=3600; 
-    //UnixTime+=3600; 
+  if ( udp.parsePacket() ) {  
+    udp.read(pb,NTP_PACKET_SIZE);  // read the packet into the buffer
+    unixTime = getTimefromNTP(pb); //if the time provided by the UTP server is different to yours, please add or subtract the corresponding hours in secs, e.g. unixTime+=3600; 
+    //unixTime+=3600; 
   }
   else
   {
@@ -33,7 +32,7 @@ void getUnixTime(){
     if (numOfUnixTime > 2){
       RTC.getTime();
       if(RTC.year < 2014){
-        UnixTime = TIME30YEARS;
+        unixTime = TIME30YEARS;
       }
       else{
         rtcOnTime = true;
@@ -51,7 +50,6 @@ void getUnixTime(){
   send an NTP request to the time server at the given address 
   NTP requests are to port 123
 **/
-
 unsigned long sendNTPpacket(IPAddress& address)
 {
   
@@ -69,17 +67,15 @@ unsigned long sendNTPpacket(IPAddress& address)
  		    
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:         
-  Udp.beginPacket(address, 123); //NTP requests are to port 123
-  Udp.write(pb,NTP_PACKET_SIZE);
-  Udp.endPacket(); 
+  udp.beginPacket(address, 123); //NTP requests are to port 123
+  udp.write(pb,NTP_PACKET_SIZE);
+  udp.endPacket(); 
 }
 
 
 /** 
   get UTC time from NTP Server and conver it in epoch time
 **/
-
-
 unsigned long getTimefromNTP(byte* pb){
   
     // NTP contains four timestamps with an integer part and a fraction part
@@ -106,12 +102,12 @@ unsigned long getTimefromNTP(byte* pb){
 
 
 /**
-  Returns the date in the format dataset/yyyymmdd.txt where dataset is the folder where the txt are stored and yyyymmdd is the
-  date when the file was created
+  Returns the date in the format yyyy-mm-dd
 **/
 char* printDate()
 {
     char datestr[30];
+    RTC.getTime();
     
     sprintf(datestr, "%04d-%02d-%02d", RTC.year, RTC.month, RTC.day); 
     return datestr;
@@ -123,33 +119,38 @@ char* printDate()
 char* printTime()
 {
     char datestr[8];
+    RTC.getTime();
     
     sprintf(datestr, "%02d:%02d:%02d", RTC.hour, RTC.minute, RTC.second);  
     return datestr;
 }
 
 /**
+This funtions updates the RTC clock time. 
+In our case it is set from the unixtime retrieved from a NTP server.
 **/
-
 void setRTCTime(){
   
   RTC.setRAM(0, (uint8_t *)&startAddr, sizeof(uint16_t));// Store startAddr in NV-RAM address 0x08  
-  TimeIsSet = 0xffff;
-  RTC.setRAM(54, (uint8_t *)&TimeIsSet, sizeof(uint16_t));  
-  RTC.getRAM(54, (uint8_t *)&TimeIsSet, sizeof(uint16_t));
-  if (TimeIsSet != 0xaa55)
+  timeIsSet = 0xffff;
+  RTC.setRAM(54, (uint8_t *)&timeIsSet, sizeof(uint16_t));  
+  RTC.getRAM(54, (uint8_t *)&timeIsSet, sizeof(uint16_t));
+  if (timeIsSet != 0xaa55)
   {
     RTC.stopClock();
         
-    RTC.fillByTime2000(UnixTime-TIME30YEARS);
+    RTC.fillByTime2000(unixTime-TIME30YEARS);
     
     RTC.setTime();
-    TimeIsSet = 0xaa55;
-    RTC.setRAM(54, (uint8_t *)&TimeIsSet, sizeof(uint16_t));
+    timeIsSet = 0xaa55;
+    RTC.setRAM(54, (uint8_t *)&timeIsSet, sizeof(uint16_t));
     RTC.startClock();
   }
 }
 
+/**
+This function shows the current date, time and day of the week retrieved from the RTC clock.
+**/
 void getRTCtime(){
   
   RTC.getTime();

@@ -1,9 +1,7 @@
 
 /**
-  calls the function to show and compute consumptions
-
+  The function shows and computes energy consumptions by each of the peak detected.
 **/
-
 void accumulatedEnergyByPeak(){
   
   switch (setType()){
@@ -31,7 +29,6 @@ void accumulatedEnergyByPeak(){
   #endif            
       break;
     }
-    //default: Serial.println("No type");
   }    
 }
 
@@ -106,23 +103,12 @@ int setType(){
  return nType;
 }
 
-/**
-  Function to print error to the Serial output (if DEBUG mode is activated).
-  Also sets a led to HIGH if an error has been triggered
-**/
-void error(char *str)
-{
-#if ECHO_TO_SERIAL    
-  Serial.print("error: ");
-  Serial.println(str);
-#endif   
-  delay(500);  
-}
 
 /**
   float to string conversion function that runs standalone
 **/
 char * floatToString(char * outstr, double val, byte precision, byte widthp){
+  
   char temp[16];
   byte i;
 
@@ -188,11 +174,10 @@ char * floatToString(char * outstr, double val, byte precision, byte widthp){
 
 
 /**
- To Read the tag RFID
+ To Read the tag RFID. Set the value for storing in the DDBB
 **/
-
 void rfidReadMug(){
-  byte i = 0;
+ 
   byte val = 0;
   byte code[6];
   byte checksum = 0;
@@ -206,15 +191,15 @@ void rfidReadMug(){
       tagValueTemp = (char*) malloc(10);
       //Serial.println("RFID cleared");
       bytesRead = 0; 
-      while (bytesRead < 12) {                        // read 10 digit code + 2 digit checksum
+      while (bytesRead < 12) {                       // read 10 digit code + 2 digit checksum
         if( Serial1.available() > 0) { 
           val = Serial1.read();
           if (bytesRead < 10)
           {
             tagValueTemp[bytesRead] = val;
           }
-          if((val == 0x0D)||(val == 0x0A)||(val == 0x03)||(val == 0x02)) { // if header or stop bytes before the 10 digit reading 
-            break;                                    // stop reading
+          if((val == 0x0D)||(val == 0x0A)||(val == 0x03)||(val == 0x02)) {  // if header or stop bytes before the 10 digit reading 
+            break;                                                          // stop reading
           }
 
           // Do Ascii/Hex conversion:
@@ -226,8 +211,6 @@ void rfidReadMug(){
 
           // Every two hex-digits, add byte to code:
           if (bytesRead & 1 == 1) {
-            // make some space for this hex-digit by
-            // shifting the previous hex-digit with 4 bits to the left:
             code[bytesRead >> 1] = (val | (tempbyte << 4));
 
             if (bytesRead >> 1 != 5) {                // If we're at the checksum byte,
@@ -237,50 +220,35 @@ void rfidReadMug(){
             tempbyte = val;                           // Store the first hex digit first...
           };
 
-          bytesRead++;          // ready to read next digit
+          bytesRead++;                                // ready to read next digit
         } 
       } 
 
       // Output to Serial:
 
-      if (bytesRead == 12) {           // if 12 digit read is complete
+      if (bytesRead == 12) {                          // if 12 digit read is complete
         tagValueTemp[10] = '\0'; 
        
       #if ECHO_TO_SERIAL
-        Serial.print("5-byte code: ");
-        for (i=0; i<5; i++) {
-          if (code[i] < 16) Serial.print("0");
-          Serial.print(code[i], HEX);
-          Serial.print(" ");
-        }
-        
-          Serial.println();
-  
-          Serial.print("Checksum: ");
-          Serial.print(code[5], HEX);
-          Serial.println(code[5] == checksum ? " -- passed." : " -- error.");
-          Serial.println();
-          
-            // Show the raw tag value
-          Serial.print("VALUE_in_READING: ");
-          Serial.println(tagValueTemp);
+        Serial.print("VALUE_in_READING: ");
+        Serial.println(tagValueTemp);
       #endif
         strcpy(tagValue, tagValueTemp);
         free(tagValueTemp);
         cardDetected = true;
       }
-
       bytesRead = 0;
     }
 }
 
-
+/**
+ Function to retrieve data from the config file stored in the SD card to a data structure.
+**/
 void copyToStruct(uint8_t* IPaddss){
 
   uint8_t bufTemp[4]; 
   for (int x = 1; x <= 4; x++) {
     bufTemp[x] = strtoul(subStr(bufferINIfile, ".", x),NULL,0);
-    //Serial.println((bufTemp[x]));
     IPaddss[x-1] = bufTemp[x];
 #if ECHO_TO_SERIAL     
     Serial.print(IPaddss[x-1]);
@@ -293,6 +261,9 @@ void copyToStruct(uint8_t* IPaddss){
         
 }
 
+/**
+  Funtion to split a string into data buffers depending of the token passed from value (separator)
+**/
 char* subStr(char* input_string, char *separator, int segment_number) {
   
   char *act, *sub, *ptr;
@@ -307,3 +278,19 @@ char* subStr(char* input_string, char *separator, int segment_number) {
   }
   return sub;
 }
+
+
+/**
+  print a char * stored in Flash Memory (instead of SRAM) to the Serial output
+**/
+void printType(const char *str){
+ 
+  memset(consumptionTypeDB, '\0', 12);
+  strcpy(consumptionTypeDB, str);
+
+  #if ECHO_TO_SERIAL         
+    Serial.print(consumptionTypeDB);
+    Serial.print('|');
+  #endif
+}
+

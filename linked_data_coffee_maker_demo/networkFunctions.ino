@@ -21,7 +21,10 @@ IPAddress getNTPAddress(){
 }
 
 
-/*** ***/
+/*** 
+This function allows to setup the configuration of the network. 
+MAC is always retrieved and the other IPs are gotten if dhcp service is not enabled.
+***/
 void setNetworkAddresses(){
   
   bool dhcpEnabled;                    // variable where result of the data searched will be stored
@@ -85,10 +88,13 @@ void setNetworkAddresses(){
 
 
 /*****
-CouchDB
+Function which is used to do a POST request to a remote server where the JSON sent is stored. The data that are passed to the function
+correspond with the energy consumption associated with each peak.
 *****/
-void POSTrequest(char* deviceID, char* device_type, char* date, char* timeSecs, char* consumption_type, char* consumption_time_in_secs, char* energy_consumption_Wh, char* coffeeMugID){
+void POSTrequest(char* deviceID, char* device_type, char* date, char* time, char* consumption_type, char* consumption_time_in_secs, char* energy_consumption_Wh, char* coffeeMugID){
 
+    char   bufferNoSQL[30];       // temporal buffer to store the data form memory   
+    
     memset(postData, '\0', 400);
     strcpy_P(bufferNoSQL, (char*)pgm_read_word(&(json_properties[0])));
     strcat(postData, bufferNoSQL);
@@ -101,7 +107,7 @@ void POSTrequest(char* deviceID, char* device_type, char* date, char* timeSecs, 
     strcat(postData, date);
     strcpy_P(bufferNoSQL, (char*)pgm_read_word(&(json_properties[3])));
     strcat(postData, bufferNoSQL);
-    strcat(postData, timeSecs);    
+    strcat(postData, time);    
     strcpy_P(bufferNoSQL, (char*)pgm_read_word(&(json_properties[4])));
     strcat(postData, bufferNoSQL);
     strcat(postData, consumption_type);
@@ -118,7 +124,7 @@ void POSTrequest(char* deviceID, char* device_type, char* date, char* timeSecs, 
     strcat(postData, bufferNoSQL);
     
 
-    int statusCode = client.post("/", postData, &response);
+    int statusCode = client.post("/ecoserver", postData, &response);
     //int statusCode = 1;
     #if ECHO_TO_SERIAL  
       Serial.println(postData);
@@ -128,7 +134,7 @@ void POSTrequest(char* deviceID, char* device_type, char* date, char* timeSecs, 
       Serial.println(response);
     #endif
    
-    memset(postData, '\0', 400);
+    memset(postData, '\0',    400);
     memset(bufferNoSQL, '\0', 30);
     response = "";  
 }
