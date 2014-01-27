@@ -45,13 +45,14 @@ unsigned int EEPROM_readint(int address) {
 **/
 void printType(const char *str){
  
-  memset(consumptionTypeDB, '\0', 10);
+  memset(consumptionTypeDB, '\0', 12);
   strcpy(consumptionTypeDB, str);
-  consumptionTypeDB[20] = '\0';
+  //consumptionTypeDB[20] = '\0';
   #if ECHO_TO_SERIAL         
     Serial.print(consumptionTypeDB);
     Serial.print('|');
   #endif
+  //consumptionTypeDB[strlen(consumptionTypeDB+1)] = '\0';
 }
 
 void initializeConfigFile(){

@@ -202,7 +202,7 @@ void rfidReadMug(){
   char * tagValueTemp;
   
   if((val = Serial1.read()) == 2) {                  // check for header 
-      //memset(tagValue, '\0', 10);
+      memset(tagValue, '\0', 12);
       tagValueTemp = (char*) malloc(10);
       //Serial.println("RFID cleared");
       bytesRead = 0; 

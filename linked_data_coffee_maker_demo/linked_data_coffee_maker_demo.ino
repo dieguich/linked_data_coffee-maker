@@ -94,10 +94,10 @@ String response   = "";
 char   postData[400];
 char   bufferNoSQL[30];
 char   consumptionSecsDB[10]; 
-char   consumptionTypeDB[10];
+char   consumptionTypeDB[12];
 
 /* RFID tags */
-char tagValue[10];
+char tagValue[12];
 boolean cardDetected = false;
 boolean cardInField  = 25;
 
@@ -186,7 +186,7 @@ void loop() {
       delay(200);
       if(digitalRead(cardInField) == 0){
         cardDetected = false;
-        memset(tagValue, '\0', 10);
+        memset(tagValue, '\0', 12);
       }
     }
     if (Serial1.available() > 0) {
