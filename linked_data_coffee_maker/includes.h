@@ -10,7 +10,7 @@
 #define TIME30YEARS             946684800 // To compute the current date and time when the RTC is updated.
 
 #define DEVICE_TYPE             "COFFEE-MAKER"    // the type of the eco-aware device
-#define ECHO_TO_SERIAL          1                 // echo data to serial port (DEBUG mode)
+#define ECHO_TO_SERIAL          0                 // echo data to serial port (DEBUG mode)
 #define IP_DB_SERVER            "130.206.138.42"  //default IP server to store coffe maker's data
 #define PORT_DB_SERVER          80
 

@@ -5,17 +5,21 @@
 void initializeConfigFile(){
   
   SPI.begin();
-  if (!SD.begin(SD_SELECT))
-    while (1)
+  if (!SD.begin(SD_SELECT)){
+    while (1){
 #if ECHO_TO_SERIAL 
       Serial.println("SD.begin() failed");
 #endif
+      digitalWrite(ledPin, HIGH);
+    }
+  }
   if (!ini.open()) {
 #if ECHO_TO_SERIAL     
     Serial.print("Ini file ");
     Serial.print(filename);
     Serial.println(" does not exist");
 #endif    
+    digitalWrite(ledPin, HIGH);
     // Cannot do anything else
     while (1);
   }
@@ -30,12 +34,16 @@ void initializeConfigFile(){
     Serial.print("ini file ");
     Serial.print(ini.getFilename());
     Serial.print(" not valid: ");
-#endif    
+#endif
+    digitalWrite(ledPin, HIGH);
     while (1);  // Cannot do anything else
   }
   
   if (ini.getValue("organisation", "locationID", bufferINIfile, bufferLen)) { 
       strcpy(organisationID, bufferINIfile);
+  }
+  else{
+    digitalWrite(ledPin, HIGH);
   }
 
 }

@@ -97,8 +97,7 @@ boolean cardDetected = false;    // to detect if the mug has been detected or no
 boolean cardInField  = 25;       // pin to sense when the coffee maker is placed on the appliance.
 
 /* LEDs to know the status */
-uint8_t readyPin = 35;           // green pin for feedback
-uint8_t postPin  = 34;           // red pin for feedback
+uint8_t ledPin   = 13;           // pin for feedback
 
 
 /**********
@@ -116,14 +115,12 @@ void setup() {
    
   pinMode(SD_SELECT,       OUTPUT);
   pinMode(ETHERNET_SELECT, OUTPUT);
-  pinMode(readyPin,        OUTPUT);
-  pinMode(postPin,         OUTPUT);
+  pinMode(ledPin,          OUTPUT);
   pinMode(currentMeasurePin, INPUT);   // sets the analog pin as input (current measure throug the coffe machine plug -mains)*/   
   pinMode(cardInField,       INPUT); 
-  digitalWrite(readyPin,  LOW);
-  digitalWrite(postPin,   LOW);
-  digitalWrite(SD_SELECT,  HIGH);       // disable SD card  
-  digitalWrite(ETHERNET_SELECT, HIGH);  // disable Ethernet 
+  digitalWrite(ledPin,          LOW);
+  digitalWrite(SD_SELECT,       HIGH);       // disable SD card  
+  digitalWrite(ETHERNET_SELECT, HIGH);       // disable Ethernet 
   
   initializeConfigFile();
   setNetworkAddresses();
@@ -131,7 +128,6 @@ void setup() {
   if(!rtcOnTime){
     setRTCTime();
   }
-  
   
 #if ECHO_TO_SERIAL  
   Serial.println(Ethernet.localIP()); 
@@ -146,7 +142,14 @@ void setup() {
   emonInstance.current(currentMeasurePin, CALIBRATION);    // sets the Pin from and the calibration to read current Values.
   wdt_enable(WDTO_8S);                                     // Watch dog code to detect if arduino is blocked anytime
   
-  digitalWrite(readyPin, HIGH);    // The led is steadily set to green. All goes Ok!
+  digitalWrite(ledPin, HIGH);    // The led is steadily set to green. All goes Ok!
+  delay(2000);
+  digitalWrite(ledPin, LOW);     // The led is steadily set to green. All goes Ok!
+  delay(2000);
+  digitalWrite(ledPin, HIGH);    // The led is steadily set to green. All goes Ok!  
+  delay(2000);
+  digitalWrite(ledPin, LOW);     // The led is steadily set to green. All goes Ok!    
+  
 }
 
 /***********

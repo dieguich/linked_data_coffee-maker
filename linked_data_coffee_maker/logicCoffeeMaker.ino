@@ -49,11 +49,7 @@ void controlCoffeMade(float readCurrentValue){
           Serial.print(consumptionWhDB);    
           Serial.println("|");
        #endif
-        digitalWrite(readyPin, LOW);
-        digitalWrite(postPin,  HIGH);
-        delay(2000);
-        digitalWrite(readyPin, HIGH);
-        digitalWrite(postPin,  LOW); 
+        
         if(prevWasCoffee){
           if(strlen(tagValue) > 10){
             tagValue[10] = '\0';

@@ -4,7 +4,7 @@
 IPAddress getNTPAddress(){
   
   IPAddress ntpAddress;
-  uint8_t       ntpTimeServer[4]  = {};
+  uint8_t   ntpTimeServer[4];
   
   memset(bufferINIfile, '\0', strlen(bufferINIfile));
 #if ECHO_TO_SERIAL         
