@@ -50,6 +50,9 @@ void setNetworkAddresses(){
     Serial.println();
 #endif     
   }
+  else{
+     digitalWrite(ledPin, HIGH);
+  }
 
   if (found && (dhcpEnabled == 0 || dhcpEnabled == false)) {
 #if ECHO_TO_SERIAL      
@@ -59,30 +62,42 @@ void setNetworkAddresses(){
       copyToStruct(myAddresses.myIP); 
       //IPAddress ip(myAddresses.myIP);  
       ip = myAddresses.myIP;
+    }else{
+       digitalWrite(ledPin, HIGH);
     }
     if (ini.getValue("static", "gateway", bufferINIfile, bufferLen)) {
       copyToStruct(myAddresses.myGateway);
       gateway = myAddresses.myGateway;
+    }else{
+       digitalWrite(ledPin, HIGH);
     }
     if (ini.getValue("static", "netmask", bufferINIfile, bufferLen)) {
       copyToStruct(myAddresses.mySubnet);
       netmask = myAddresses.mySubnet;
+    }else{
+       digitalWrite(ledPin, HIGH);
     }
     if (ini.getValue("static", "dnsServer", bufferINIfile, bufferLen)) {
         //Serial.print("section 'static' has an entry 'dnsServer' with value ");
        copyToStruct(myAddresses.myDNS);
        dnsServer = myAddresses.myDNS;
+    }else{
+       digitalWrite(ledPin, HIGH);
     }
     Ethernet.begin(mac, ip, dnsServer, gateway, netmask);
   }
   else{
-    Ethernet.begin(mac);
-#if ECHO_TO_SERIAL       
-    Serial.println("Ethernet started");
-#endif     
-    
-  }
-  
+    if(Ethernet.begin(mac)==0){
+    #if ECHO_TO_SERIAL       
+      Serial.println("Failed to configure Ethernet using DHCP");
+    #endif      
+    }
+    else{
+    #if ECHO_TO_SERIAL       
+      Serial.println("Ethernet started");
+    #endif     
+    }
+  } 
 }
 
 

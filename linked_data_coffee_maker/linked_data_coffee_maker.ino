@@ -33,6 +33,7 @@ RestClient   client = RestClient(IP_DB_SERVER, PORT_DB_SERVER);   //Rest Client
 uint16_t startAddr = 0x0000;            // start address to store in the NV-RAM
 uint16_t timeIsSet = 0xaa55;            // helper that time must not set again
 uint16_t lastAddr;                      // new address for storing in NV-RAM
+uint8_t  dayOfWeek;
 
 
 /** Variables for accessing to INI file **/
@@ -43,9 +44,9 @@ char       bufferINIfile[bufferLen];
 IniFile    ini(filename);                      // object to access the config file
 
 /*  Current */
-uint8_t        currentMeasurePin = A1;         // pin to measure the current flow
-boolean        currentIsFlowing  = false;      // to know if the previous state of the current measure
-EnergyMonitor  emonInstance;                   // A emonLib instance to read current Values fron current CT sensor
+uint8_t        currentMeasurePin = CURRENT_PIN; // pin to measure the current flow
+boolean        currentIsFlowing  = false;       // to know if the previous state of the current measure
+EnergyMonitor  emonInstance;                    // a emonLib instance to read current Values fron current CT sensor
 
 
 /*Related with NTP server and UDP setup for TxRx */
@@ -92,12 +93,12 @@ char   timeDB[20];               // to store the time when the peak was detected
 char   consumptionWhDB[10];      // to store the energy consumed by the peak detected
 
 /* RFID tags */
-char    tagValue[12];            // to strore the RFID tag read 
-boolean cardDetected = false;    // to detect if the mug has been detected or not
-boolean cardInField  = 25;       // pin to sense when the coffee maker is placed on the appliance.
+char    tagValue[12];                          // to strore the RFID tag read 
+boolean cardDetected = false;                  // to detect if the mug has been detected or not
+boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
 
 /* LEDs to know the status */
-uint8_t ledPin   = 13;           // pin for feedback
+uint8_t ledPin       = STATUS_PIN; // pin for feedback
 
 
 /**********
@@ -106,7 +107,7 @@ uint8_t ledPin   = 13;           // pin for feedback
 void setup() {
    
   Serial1.begin(9600);
-  wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
+  //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
   
 #if ECHO_TO_SERIAL  
   Serial.begin(9600); 
@@ -117,7 +118,8 @@ void setup() {
   pinMode(ETHERNET_SELECT, OUTPUT);
   pinMode(ledPin,          OUTPUT);
   pinMode(currentMeasurePin, INPUT);   // sets the analog pin as input (current measure throug the coffe machine plug -mains)*/   
-  pinMode(cardInField,       INPUT); 
+  pinMode(cardInField,       INPUT);
+  
   digitalWrite(ledPin,          LOW);
   digitalWrite(SD_SELECT,       HIGH);       // disable SD card  
   digitalWrite(ETHERNET_SELECT, HIGH);       // disable Ethernet 
@@ -140,15 +142,15 @@ void setup() {
 #endif
   
   emonInstance.current(currentMeasurePin, CALIBRATION);    // sets the Pin from and the calibration to read current Values.
-  wdt_enable(WDTO_8S);                                     // Watch dog code to detect if arduino is blocked anytime
   
-  digitalWrite(ledPin, HIGH);    // The led is steadily set to green. All goes Ok!
+  
+  digitalWrite(ledPin, HIGH);    // to test if all goes Ok and the device is properly setup and ready to loop
   delay(2000);
-  digitalWrite(ledPin, LOW);     // The led is steadily set to green. All goes Ok!
+  digitalWrite(ledPin, LOW);     
   delay(2000);
-  digitalWrite(ledPin, HIGH);    // The led is steadily set to green. All goes Ok!  
+  digitalWrite(ledPin, HIGH);    
   delay(2000);
-  digitalWrite(ledPin, LOW);     // The led is steadily set to green. All goes Ok!    
+  digitalWrite(ledPin, LOW);     
   
 }
 
@@ -156,8 +158,21 @@ void setup() {
   LOOP
 ************/
 void loop() {
-   
-  wdt_reset();                           // Watch dog code to detect if arduino is blocked anytime
+  
+  RTC.getTime();
+  if(dayOfWeek != RTC.dow){
+    memset(dateDB, '\0', 50);
+    strcpy(dateDB, printDate());
+    memset(timeDB, '\0', 20);
+    strcpy(timeDB, printTime());
+    POSTrequest("UDEUSTO-TEST", DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");
+    delay(100);
+    wdt_reset();
+    delay(100);
+    wdt_enable(WDTO_15MS);
+    while(1);
+  }
+  //wdt_reset();                           // Watch dog code to detect if arduino is blocked anytime
   delay(25);
   float currentToMeasure = emonInstance.calcIrms(EMON_INSTANCE_VALUE);
   

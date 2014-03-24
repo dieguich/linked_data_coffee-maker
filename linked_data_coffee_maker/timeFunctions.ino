@@ -145,6 +145,9 @@ void setRTCTime(){
     timeIsSet = 0xaa55;
     RTC.setRAM(54, (uint8_t *)&timeIsSet, sizeof(uint16_t));
     RTC.startClock();
+    RTC.getTime();
+    dayOfWeek = RTC.dow;
+    
   }
 }
 
