@@ -148,7 +148,6 @@ void setRTCTime(){
     RTC.startClock();
     RTC.getTime();
     dayOfWeek = RTC.dow;
-    
   }
 }
 

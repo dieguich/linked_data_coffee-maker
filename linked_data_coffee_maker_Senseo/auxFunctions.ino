@@ -1,11 +1,46 @@
 
 /**
+  The function shows and computes energy consumptions by each of the peak detected.
+**/
+void accumulatedEnergyByPeak(){
+  
+  switch (setType()){
+    case 1:{
+      eCoffees += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                             
+      Serial.print("Consumed by Coffees: ");
+      Serial.println(eCoffees, 2);
+  #endif                    
+      break;
+    }
+    case 2:{      
+      eStartTimes += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                                         
+      Serial.print("Consumed by S. time: ");
+      Serial.println(eStartTimes, 2);
+  #endif            
+      break;
+    }
+    case 3:{
+      ePeaks += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                                         
+      Serial.print("Consumed by Peaks: ");
+      Serial.println(ePeaks, 2);
+  #endif            
+      break;
+    }
+  }    
+}
+
+
+
+/**
   This function is many fold:
     * It figures out if the detected activation is a Stand By Peak, a Start Time or a Coffee.
     * Print this information in Serial output if DEBUG mode activated and to currentFile.
     * Before return the current Type, it prints the time implied in each of the detected activation.
 **/
-int setType(){
+int setType(boolean isCoffeeDetected){
 
   uint8_t nType = 0;
 
@@ -18,13 +53,18 @@ int setType(){
       printType(sTime);         
     }
     else if(millis() < countStart){
-      if(timeOn > 12000){ 
-        printType(coffee);        
-        nCoffees++;
+      //Serial.print("Current Value Mean: ");      
+      //Serial.println(currenValueMean);
+      if(currenValueMean > 3.65)
+      {
+        printType(coffee);
         prevWasCoffee = true;
-        isStartTime = false;
         nType = 1;
-      }else{  
+        nCoffees++;
+        isStartTime = false;
+        isCoffee = false;       
+      }
+      else{
         printType(sTime);               
         nSTimes++;
         prevWasCoffee = false;        
@@ -33,24 +73,19 @@ int setType(){
     }
     else{
       isStartTime = false;
-      if(timeOn > 7000 && !prevWasCoffee){   
-        printType(coffee);        
-        prevWasCoffee = true;
-        nCoffees++;
-        nType = 1;         
-      }else{      
-        printType(peak);   
-        nSByPeaks++;
-        prevWasCoffee = false;        
-        nType = 3;
-      }
-    }
+      printType(peak);   
+      nSByPeaks++;
+      prevWasCoffee = false;        
+      nType = 3;
+    }  
   }
-  else if(timeOn > 7000){  // if the operating time is bigger than 7secs is a coffee REMOVED:  && !prevWasCoffee
+  else if (isCoffeeDetected) {
     printType(coffee);
-    prevWasCoffee = true;    
-    nCoffees++;
+    prevWasCoffee = true;
     nType = 1;
+    nCoffees++;
+    isCoffee = false;
+    isStartTime = false;
   }
   else{
     printType(peak);
@@ -64,7 +99,6 @@ int setType(){
   Serial.print(timeOn);
   Serial.print('|');    
 #endif
-
  return nType;
 }
 
@@ -152,7 +186,6 @@ void rfidReadMug(){
   char * tagValueTemp;
   
   if((val = Serial1.read()) == 2) {                  // check for header 
-      //Serial.println("DETECTED");
       memset(tagValue, '\0', 12);
       tagValueTemp = (char*) malloc(10);
       //Serial.println("RFID cleared");
@@ -200,10 +233,8 @@ void rfidReadMug(){
         Serial.println(tagValueTemp);
       #endif
         strcpy(tagValue, tagValueTemp);
-        //Serial.print("VALUE_in_READING: ");
-        //Serial.println(tagValueTemp);
         free(tagValueTemp);
-        cardDetected = true;
+        //cardDetected = true;
       }
       bytesRead = 0;
     }

@@ -1,4 +1,4 @@
-/****** DEFINES *******/
+ º/****** DEFINES *******/
 #define NTP_PACKET_SIZE         48      // NTP time stamp is in the first 48 bytes of the message
 #define UDP_PORT                8888    // local port to listen for UDP packets
 #define CALIBRATION             20.5
@@ -8,7 +8,6 @@
 #define ETHERNET_SELECT         10        // The select pin used for the SD card
 #define BUFFER_LENGTH           80        // The length of the buffer to read from the SD
 #define TIME30YEARS             946684800 // To compute the current date and time when the RTC is updated.
-#define TIME_OF_DELAY           1000      // The time that the Arduino is delayed to confirm that a consumption has finished.
 
 #define DEVICE_TYPE             "COFFEE-MAKER"    // the type of the eco-aware device
 #define IP_DB_SERVER            "130.206.138.42"  //default IP server to store coffe maker's data

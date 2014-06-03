@@ -94,7 +94,7 @@ char   consumptionWhDB[10];      // to store the energy consumed by the peak det
 
 /* RFID tags */
 char    tagValue[12];                          // to strore the RFID tag read 
-boolean cardDetected = false;                  // to detect if the mug has been detected or not
+//boolean cardDetected = false;                  // to detect if the mug has been detected or not
 boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
 
 /* LEDs to know the status */
@@ -182,13 +182,13 @@ void loop() {
   }
   if(isStable){
     controlCoffeMade(currentToMeasure);            // to read the the RMS current flow [0..30A]
-    if(cardDetected && digitalRead(cardInField) == 0){
+    /*if(cardDetected && digitalRead(cardInField) == 0){
       delay(200);
       if(digitalRead(cardInField) == 0){
         cardDetected = false;
         memset(tagValue, '\0', 12);
       }
-    }
+    }*/
     if (Serial1.available() > 0) {
       rfidReadMug();
     }

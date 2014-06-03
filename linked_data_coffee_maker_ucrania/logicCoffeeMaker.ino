@@ -6,7 +6,6 @@
 **/
 void controlCoffeMade(float readCurrentValue){  
 
-  
   if((readCurrentValue > 0.5)){  // if the machine is working (hot water) and it was idle in the previous loop.
     if ((!currentIsFlowing)){ 
       timeCount = millis();      // to calculate the time used to make the current coffee.
@@ -37,10 +36,11 @@ void controlCoffeMade(float readCurrentValue){
   
   
   if((readCurrentValue <= 0.4) && (currentIsFlowing)){  // if the machine is idle and it was working in the previous loop.  
-      delay(TIME_OF_DELAY);                                      // wait a second to know if is a false stop 
+      delay(1000);                                      // wait a second to know if is a false stop 
       if (emonInstance.calcIrms(EMON_INSTANCE_VALUE) <= 0.4){        
         currentIsFlowing = false;               // the state of the machine shift to idle
-        timeOn = millis()-timeCount-TIME_OF_DELAY;            // compute the time used to prepare a coffee (2secons to establish the current to 0 after a hot drink made) 
+        timeOn = millis()-timeCount;            // compute the time used to prepare a coffee (2secons to establish the current to 0 after a hot drink made) 
+        totalTimeOn  += timeOn;                 // sumatory of partial times. It will be used afterwards to sumarize the whole energy consumption during a day
         setType();
         memset(consumptionWhDB, '\0', 10);
         floatToString(consumptionWhDB, ((auxEnergy/nLoopPower)*(timeOn/3600000.0)), 2, 3);        

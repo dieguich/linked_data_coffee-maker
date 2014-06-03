@@ -6,14 +6,14 @@
 **/
 void controlCoffeMade(float readCurrentValue){  
 
-  
+  Serial.println(readCurrentValue);
   if((readCurrentValue > 0.5)){  // if the machine is working (hot water) and it was idle in the previous loop.
     if ((!currentIsFlowing)){ 
       timeCount = millis();      // to calculate the time used to make the current coffee.
-      if(lastPeak == 0 || (timeCount-lastPeak)/1000 > 240){        
+      if(lastPeak == 0 || (timeCount-lastPeak)/1000 > 300){        
         isStartTime = true;
         wasOff      = true;        
-        countStart  = timeCount + 120000;                   // during 120 seconds each peak that occurs will be considered as StartTime
+        countStart  = timeCount + 150000;                   // during 120 seconds each peak that occurs will be considered as StartTime
       }
       lastPeak = millis();
       
@@ -32,16 +32,32 @@ void controlCoffeMade(float readCurrentValue){
       currentIsFlowing = true;   //The state of the machine shift to working
     }
     auxEnergy += (readCurrentValue*220);
+    
+    if(nLoopPower < 25)
+    {
+      currenValueMean += readCurrentValue/25.0;
+    }
+    if(nLoopPower == 25)
+    {
+      if(currenValueMean > 2)
+      {
+        isCoffee = true;
+      }
+      //Serial.print("Mean: ");
+      //Serial.println(currenValueMean);
+      
+    }
     nLoopPower++;
   }
   
   
-  if((readCurrentValue <= 0.4) && (currentIsFlowing)){  // if the machine is idle and it was working in the previous loop.  
-      delay(TIME_OF_DELAY);                                      // wait a second to know if is a false stop 
-      if (emonInstance.calcIrms(EMON_INSTANCE_VALUE) <= 0.4){        
+  if((readCurrentValue <= 0.5) && (currentIsFlowing)){  // if the machine is idle and it was working in the previous loop.  
+      delay(1000);                                      // wait a second to know if is a false stop 
+      if (emonInstance.calcIrms(EMON_INSTANCE_VALUE) <= 0.5){        
         currentIsFlowing = false;               // the state of the machine shift to idle
-        timeOn = millis()-timeCount-TIME_OF_DELAY;            // compute the time used to prepare a coffee (2secons to establish the current to 0 after a hot drink made) 
-        setType();
+        timeOn = millis()-timeCount;            // compute the time used to prepare a coffee (2secons to establish the current to 0 after a hot drink made) 
+        totalTimeOn  += timeOn;                 // sumatory of partial times. It will be used afterwards to sumarize the whole energy consumption during a day
+        setType(isCoffee);
         memset(consumptionWhDB, '\0', 10);
         floatToString(consumptionWhDB, ((auxEnergy/nLoopPower)*(timeOn/3600000.0)), 2, 3);        
        #if ECHO_TO_SERIAL                                 
@@ -51,18 +67,14 @@ void controlCoffeMade(float readCurrentValue){
         
         if(prevWasCoffee){
           if(strlen(tagValue) > 10){
-            //Serial.print("BIGGER THAN 10: ");
-            //Serial.println(tagValue);
             tagValue[10] = '\0';
-          }  
-          //Serial.print("to send: "); 
-          //Serial.println(tagValue);
+          }   
           POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, tagValue);
-          
         #if ECHO_TO_SERIAL                                 
           Serial.print("send: ");
           Serial.println(tagValue);          
         #endif
+          memset(tagValue, '\0', 12);
         }
         else{
         #if ECHO_TO_SERIAL                                 
@@ -73,6 +85,7 @@ void controlCoffeMade(float readCurrentValue){
         }
         auxEnergy = 0.0;              
         timeOn  = timeCount = nLoopPower = 0;
+        currenValueMean = 0.0;
       }
       else{
         currentIsFlowing = true;       // it was not a coffe (fake)

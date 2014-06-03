@@ -1,5 +1,40 @@
 
 /**
+  The function shows and computes energy consumptions by each of the peak detected.
+**/
+void accumulatedEnergyByPeak(){
+  
+  switch (setType()){
+    case 1:{
+      eCoffees += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                             
+      Serial.print("Consumed by Coffees: ");
+      Serial.println(eCoffees, 2);
+  #endif                    
+      break;
+    }
+    case 2:{      
+      eStartTimes += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                                         
+      Serial.print("Consumed by S. time: ");
+      Serial.println(eStartTimes, 2);
+  #endif            
+      break;
+    }
+    case 3:{
+      ePeaks += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                                         
+      Serial.print("Consumed by Peaks: ");
+      Serial.println(ePeaks, 2);
+  #endif            
+      break;
+    }
+  }    
+}
+
+
+
+/**
   This function is many fold:
     * It figures out if the detected activation is a Stand By Peak, a Start Time or a Coffee.
     * Print this information in Serial output if DEBUG mode activated and to currentFile.
@@ -18,7 +53,7 @@ int setType(){
       printType(sTime);         
     }
     else if(millis() < countStart){
-      if(timeOn > 12000){ 
+      if(timeOn > 25000 && timeOn < 45000) { 
         printType(coffee);        
         nCoffees++;
         prevWasCoffee = true;
@@ -33,7 +68,7 @@ int setType(){
     }
     else{
       isStartTime = false;
-      if(timeOn > 7000 && !prevWasCoffee){   
+      if(timeOn > 25000){   
         printType(coffee);        
         prevWasCoffee = true;
         nCoffees++;
@@ -46,7 +81,7 @@ int setType(){
       }
     }
   }
-  else if(timeOn > 7000){  // if the operating time is bigger than 7secs is a coffee REMOVED:  && !prevWasCoffee
+  else if(timeOn > 25000){  // if the operating time is bigger than 7secs is a coffee REMOVED:  && !prevWasCoffee
     printType(coffee);
     prevWasCoffee = true;    
     nCoffees++;
@@ -253,7 +288,7 @@ char* subStr(char* input_string, char *separator, int segment_number) {
 **/
 void printType(const char *str){
  
-  memset(consumptionTypeDB, '\0', 12);
+  memset(consumptionTypeDB, '\0', 15);
   strcpy(consumptionTypeDB, str);
 
   #if ECHO_TO_SERIAL         
@@ -262,6 +297,17 @@ void printType(const char *str){
   #endif
 }
 
-
+void postCoffeeCup(){
+  memset(dateDB, '\0', 50);
+  strcpy(dateDB, printDate());
+  memset(timeDB, '\0', 20);
+  strcpy(timeDB, printTime());
+  printType(coffee_cup);
+  memset(consumptionSecsDB, '\0', 10);
+  strcpy(consumptionSecsDB, "0.0");
+  memset(consumptionWhDB, '\0', 10);
+  strcpy(consumptionWhDB, "0.0");
+  POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, tagValue);
+}
 
 

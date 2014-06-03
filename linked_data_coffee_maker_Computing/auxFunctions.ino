@@ -1,4 +1,3 @@
-
 /**
   This function is many fold:
     * It figures out if the detected activation is a Stand By Peak, a Start Time or a Coffee.
@@ -18,7 +17,7 @@ int setType(){
       printType(sTime);         
     }
     else if(millis() < countStart){
-      if(timeOn > 12000){ 
+      if(timeOn > 7000){ 
         printType(coffee);        
         nCoffees++;
         prevWasCoffee = true;
@@ -152,7 +151,6 @@ void rfidReadMug(){
   char * tagValueTemp;
   
   if((val = Serial1.read()) == 2) {                  // check for header 
-      //Serial.println("DETECTED");
       memset(tagValue, '\0', 12);
       tagValueTemp = (char*) malloc(10);
       //Serial.println("RFID cleared");
@@ -200,9 +198,8 @@ void rfidReadMug(){
         Serial.println(tagValueTemp);
       #endif
         strcpy(tagValue, tagValueTemp);
-        //Serial.print("VALUE_in_READING: ");
-        //Serial.println(tagValueTemp);
         free(tagValueTemp);
+        timetoReleaseRFID = millis();
         cardDetected = true;
       }
       bytesRead = 0;

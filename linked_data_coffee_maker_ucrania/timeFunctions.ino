@@ -36,7 +36,6 @@ void getUnixTime(){
       }
       else{
         rtcOnTime = true;
-        dayOfWeek = RTC.dow;
       }
       
     }

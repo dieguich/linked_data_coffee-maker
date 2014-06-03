@@ -86,7 +86,7 @@ boolean isStable      = false;   // variable to calibrate the current sensor. Wa
 String response   = "";          // value returned by the server.
 char   postData[400];            // buffer to store the data to send
 char   consumptionSecsDB[10];    // to store the second consumming energy
-char   consumptionTypeDB[12];    // to store the type of consumption of the coffee maker
+char   consumptionTypeDB[15];    // to store the type of consumption of the coffee maker
 char   organisationID[20];       // organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.
 char   dateDB[50];               // to store the date when the peak was detected
 char   timeDB[20];               // to store the time when the peak was detected
@@ -94,6 +94,7 @@ char   consumptionWhDB[10];      // to store the energy consumed by the peak det
 
 /* RFID tags */
 char    tagValue[12];                          // to strore the RFID tag read 
+char    tagValueAux[12];                       // to strore a copy of the the RFID tag read  
 boolean cardDetected = false;                  // to detect if the mug has been detected or not
 boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
 
@@ -186,6 +187,11 @@ void loop() {
       delay(200);
       if(digitalRead(cardInField) == 0){
         cardDetected = false;
+        if(strcmp(tagValue, tagValueAux) != 0){
+          postCoffeeCup();
+        }
+        memset(tagValueAux, '\0', 12);
+        strcpy(tagValueAux, tagValue);
         memset(tagValue, '\0', 12);
       }
     }

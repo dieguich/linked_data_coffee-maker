@@ -47,6 +47,7 @@ IniFile    ini(filename);                      // object to access the config fi
 uint8_t        currentMeasurePin = CURRENT_PIN; // pin to measure the current flow
 boolean        currentIsFlowing  = false;       // to know if the previous state of the current measure
 EnergyMonitor  emonInstance;                    // a emonLib instance to read current Values fron current CT sensor
+float          currenValueMean = 0.0;
 
 
 /*Related with NTP server and UDP setup for TxRx */
@@ -81,6 +82,8 @@ boolean isStartTime   = false;   // to know if the detected peak belong to [Star
 boolean prevWasCoffee = false;   // test if the last peak was a coffe (to distinguish between coffee and peak)
 boolean wasOff        = true;    // test if the coffe maker was previously switch off.
 boolean isStable      = false;   // variable to calibrate the current sensor. Wait time until stable.
+boolean isCoffee      = false;   
+boolean tenTimesRead  = false;
 
 /* NoSQL DataBase */
 String response   = "";          // value returned by the server.
@@ -175,20 +178,20 @@ void loop() {
   //wdt_reset();                           // Watch dog code to detect if arduino is blocked anytime
   delay(25);
   float currentToMeasure = emonInstance.calcIrms(EMON_INSTANCE_VALUE);
-  Serial.println(currentToMeasure);
+  
   if(isStable == false && currentToMeasure < 0.40){  // wait until the current sensor is stable.
     isStable = true;
     delay(200);
   }
   if(isStable){
     controlCoffeMade(currentToMeasure);            // to read the the RMS current flow [0..30A]
-    if(cardDetected && digitalRead(cardInField) == 0){
+    /*if(cardDetected && digitalRead(cardInField) == 0){
       delay(200);
       if(digitalRead(cardInField) == 0){
         cardDetected = false;
         memset(tagValue, '\0', 12);
       }
-    }
+    }*/
     if (Serial1.available() > 0) {
       rfidReadMug();
     }

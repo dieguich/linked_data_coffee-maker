@@ -93,9 +93,10 @@ char   timeDB[20];               // to store the time when the peak was detected
 char   consumptionWhDB[10];      // to store the energy consumed by the peak detected
 
 /* RFID tags */
-char    tagValue[12];                          // to strore the RFID tag read 
-boolean cardDetected = false;                  // to detect if the mug has been detected or not
-boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
+char    tagValue[12];                               // to strore the RFID tag read 
+boolean cardDetected      = false;                  // to detect if the mug has been detected or not
+boolean cardInField       = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
+long    timetoReleaseRFID = 0;                      // variable to release the last RFID readed
 
 /* LEDs to know the status */
 uint8_t ledPin       = STATUS_PIN; // pin for feedback
@@ -165,7 +166,7 @@ void loop() {
     strcpy(dateDB, printDate());
     memset(timeDB, '\0', 20);
     strcpy(timeDB, printTime());
-    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");
+    POSTrequest("Compute", DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");
     delay(100);
     wdt_reset();
     delay(100);
@@ -182,14 +183,11 @@ void loop() {
   }
   if(isStable){
     controlCoffeMade(currentToMeasure);            // to read the the RMS current flow [0..30A]
-    if(cardDetected && digitalRead(cardInField) == 0){
-      delay(200);
-      if(digitalRead(cardInField) == 0){
-        cardDetected = false;
-        memset(tagValue, '\0', 12);
-      }
+    if(cardDetected && (millis() > timetoReleaseRFID + 25000)){
+      cardDetected = false;
+      memset(tagValue, '\0', 12);
     }
-    if (Serial1.available() > 0) {
+    if (Serial1.available() > 0 && cardDetected == false) {
       rfidReadMug();
     }
   }
