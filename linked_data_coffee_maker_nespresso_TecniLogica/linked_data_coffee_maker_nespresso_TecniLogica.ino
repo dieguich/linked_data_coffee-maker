@@ -5,7 +5,7 @@
 #include <IniFile.h>
 #include <string.h>
 
-#include <DS1307new.h>  //DS1307 Module
+#include <DS1307new.h>  //DS1307 Module for RTC
 #include <SPI.h>
 #include <Ethernet.h>
 #include <EEPROM.h>
@@ -34,12 +34,12 @@ uint16_t startAddr = 0x0000;            // start address to store in the NV-RAM
 uint16_t timeIsSet = 0xaa55;            // helper that time must not set again
 uint16_t lastAddr;                      // new address for storing in NV-RAM
 uint8_t  dayOfWeek;
+boolean  rtcOnTime        = false;           // to know if the Arduino was previously set On time or not
 
 
 /** Variables for accessing to INI file **/
 const char *filename        = "/config.ini";   // the name of the config file. Stored in "/"
 const      size_t bufferLen = BUFFER_LENGTH;
-boolean    rtcOnTime        = false;           // to know if the Arduino was previously set On time or not
 char       bufferINIfile[bufferLen];
 IniFile    ini(filename);                      // object to access the config file
 
@@ -47,9 +47,10 @@ IniFile    ini(filename);                      // object to access the config fi
 uint8_t        currentMeasurePin = CURRENT_PIN; // pin to measure the current flow
 boolean        currentIsFlowing  = false;       // to know if the previous state of the current measure
 EnergyMonitor  emonInstance;                    // a emonLib instance to read current Values fron current CT sensor
+float          currenValueMean = 0.0;
 
 
-/*Related with NTP server and UDP setup for TxRx */
+/* Variables related with NTP server and UDP setup for TxRx */
 unsigned long unixTime      = 0;               // variable to store the Unix NTP time retrieved form NTP server
 byte          pb[NTP_PACKET_SIZE];             // buffer to hold incoming and outgoing packets 
 int           numOfUnixTime = 0;               // used to know if the proccess of getting UnixTime fails more than this variable.
@@ -81,23 +82,22 @@ boolean isStartTime   = false;   // to know if the detected peak belong to [Star
 boolean prevWasCoffee = false;   // test if the last peak was a coffe (to distinguish between coffee and peak)
 boolean wasOff        = true;    // test if the coffe maker was previously switch off.
 boolean isStable      = false;   // variable to calibrate the current sensor. Wait time until stable.
+boolean isCoffee      = false; 
 boolean isFirstTime   = true;    // variable used to control the delay to prevent electricity cuts.
 
 /* NoSQL DataBase */
 String response   = "";          // value returned by the server.
 char   postData[400];            // buffer to store the data to send
 char   consumptionSecsDB[10];    // to store the second consumming energy
-char   consumptionTypeDB[15];    // to store the type of consumption of the coffee maker
+char   consumptionTypeDB[12];    // to store the type of consumption of the coffee maker
 char   organisationID[20];       // organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.
 char   dateDB[50];               // to store the date when the peak was detected
 char   timeDB[20];               // to store the time when the peak was detected
 char   consumptionWhDB[10];      // to store the energy consumed by the peak detected
 
 /* RFID tags */
-char    tagValue[12];                          // to strore the RFID tag read 
-char    tagValueAux[12];                       // to strore a copy of the the RFID tag read  
-boolean cardDetected = false;                  // to detect if the mug has been detected or not
-boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
+char    tagValue[12];                               // to strore the RFID tag read 
+boolean cardInField       = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
 
 /* LEDs to know the status */
 uint8_t ledPin       = STATUS_PIN; // pin for feedback
@@ -115,6 +115,7 @@ void setup() {
   delay(500);
   
   Serial1.begin(9600);
+  //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
   
 #if ECHO_TO_SERIAL  
   Serial.begin(9600); 
@@ -132,7 +133,7 @@ void setup() {
   digitalWrite(ETHERNET_SELECT, HIGH);       // disable Ethernet 
   
   initializeConfigFile();
-  delay(120000);  // Wait two minutes to prevent electric cuts.
+  delay(120000);  // Wait two seconds to prevent electric cuts.
   setNetworkAddresses();
   getUnixTime();
   if(!rtcOnTime){
@@ -173,7 +174,7 @@ void loop() {
     strcpy(dateDB, printDate());
     memset(timeDB, '\0', 20);
     strcpy(timeDB, printTime());
-    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");  
+    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");
     delay(100);
     wdt_reset();
     delay(100);
@@ -190,18 +191,10 @@ void loop() {
   }
   if(isStable){
     controlCoffeMade(currentToMeasure);            // to read the the RMS current flow [0..30A]
-    if(cardDetected && digitalRead(cardInField) == 0){
-      delay(200);
-      if(digitalRead(cardInField) == 0){
-        cardDetected = false;
-        if(strcmp(tagValue, tagValueAux) != 0){
-          postCoffeeCup();
-        }
-        memset(tagValueAux, '\0', 12);
-        strcpy(tagValueAux, tagValue);
-        memset(tagValue, '\0', 12);
-      }
-    }
+    /*if(cardDetected && (millis() > timetoReleaseRFID + 25000)){
+      cardDetected = false;
+      memset(tagValue, '\0', 12);
+    }*/
     if (Serial1.available() > 0) {
       rfidReadMug();
     }

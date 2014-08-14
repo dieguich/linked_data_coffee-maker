@@ -81,7 +81,6 @@ boolean isStartTime   = false;   // to know if the detected peak belong to [Star
 boolean prevWasCoffee = false;   // test if the last peak was a coffe (to distinguish between coffee and peak)
 boolean wasOff        = true;    // test if the coffe maker was previously switch off.
 boolean isStable      = false;   // variable to calibrate the current sensor. Wait time until stable.
-boolean isFirstTime   = true;    // variable used to control the delay to prevent electricity cuts.
 
 /* NoSQL DataBase */
 String response   = "";          // value returned by the server.
@@ -107,14 +106,9 @@ uint8_t ledPin       = STATUS_PIN; // pin for feedback
   SETUP
 ***********/
 void setup() {
-  
-  pinMode(47,OUTPUT);  //RESET PIN
-  digitalWrite(47, LOW);
-  delay(500);
-  digitalWrite(47, HIGH); 
-  delay(500);
-  
+   
   Serial1.begin(9600);
+  //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
   
 #if ECHO_TO_SERIAL  
   Serial.begin(9600); 
@@ -132,7 +126,6 @@ void setup() {
   digitalWrite(ETHERNET_SELECT, HIGH);       // disable Ethernet 
   
   initializeConfigFile();
-  delay(120000);  // Wait two minutes to prevent electric cuts.
   setNetworkAddresses();
   getUnixTime();
   if(!rtcOnTime){
@@ -173,7 +166,7 @@ void loop() {
     strcpy(dateDB, printDate());
     memset(timeDB, '\0', 20);
     strcpy(timeDB, printTime());
-    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");  
+    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");
     delay(100);
     wdt_reset();
     delay(100);

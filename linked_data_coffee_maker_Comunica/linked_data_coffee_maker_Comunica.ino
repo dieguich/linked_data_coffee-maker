@@ -74,6 +74,7 @@ unsigned long countStart        = 0;        // to count when a peak has started
 unsigned long lastPeak          = 0;        // this variable is to store when the last peak has been triggered (aim: figure out what kind of peak is [peak, coffee or S. Time.]) 
 unsigned long timeCount         = 0;        // the timestamp to store the begining of a peak, coffee or S. Time.
 unsigned long totalTimeOn       = 0;        // the time that the coffee machine was operating (during the cicle of 24h)
+unsigned long timeExpireCapsule = 0;        // XXX
 
 
 /* Testers */
@@ -81,13 +82,13 @@ boolean isStartTime   = false;   // to know if the detected peak belong to [Star
 boolean prevWasCoffee = false;   // test if the last peak was a coffe (to distinguish between coffee and peak)
 boolean wasOff        = true;    // test if the coffe maker was previously switch off.
 boolean isStable      = false;   // variable to calibrate the current sensor. Wait time until stable.
-boolean isFirstTime   = true;    // variable used to control the delay to prevent electricity cuts.
+boolean firstCapsule  = false;   // XXXX
 
 /* NoSQL DataBase */
 String response   = "";          // value returned by the server.
 char   postData[400];            // buffer to store the data to send
 char   consumptionSecsDB[10];    // to store the second consumming energy
-char   consumptionTypeDB[15];    // to store the type of consumption of the coffee maker
+char   consumptionTypeDB[12];    // to store the type of consumption of the coffee maker
 char   organisationID[20];       // organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.
 char   dateDB[50];               // to store the date when the peak was detected
 char   timeDB[20];               // to store the time when the peak was detected
@@ -95,7 +96,7 @@ char   consumptionWhDB[10];      // to store the energy consumed by the peak det
 
 /* RFID tags */
 char    tagValue[12];                          // to strore the RFID tag read 
-char    tagValueAux[12];                       // to strore a copy of the the RFID tag read  
+char    tagValue2Capsule[12];                  // XXXX
 boolean cardDetected = false;                  // to detect if the mug has been detected or not
 boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
 
@@ -107,14 +108,9 @@ uint8_t ledPin       = STATUS_PIN; // pin for feedback
   SETUP
 ***********/
 void setup() {
-  
-  pinMode(47,OUTPUT);  //RESET PIN
-  digitalWrite(47, LOW);
-  delay(500);
-  digitalWrite(47, HIGH); 
-  delay(500);
-  
+   
   Serial1.begin(9600);
+  //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
   
 #if ECHO_TO_SERIAL  
   Serial.begin(9600); 
@@ -132,7 +128,6 @@ void setup() {
   digitalWrite(ETHERNET_SELECT, HIGH);       // disable Ethernet 
   
   initializeConfigFile();
-  delay(120000);  // Wait two minutes to prevent electric cuts.
   setNetworkAddresses();
   getUnixTime();
   if(!rtcOnTime){
@@ -173,7 +168,7 @@ void loop() {
     strcpy(dateDB, printDate());
     memset(timeDB, '\0', 20);
     strcpy(timeDB, printTime());
-    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");  
+    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");
     delay(100);
     wdt_reset();
     delay(100);
@@ -190,18 +185,14 @@ void loop() {
   }
   if(isStable){
     controlCoffeMade(currentToMeasure);            // to read the the RMS current flow [0..30A]
-    if(cardDetected && digitalRead(cardInField) == 0){
+    /*if(cardDetected && digitalRead(cardInField) == 0){
       delay(200);
       if(digitalRead(cardInField) == 0){
+        Serial.println("Deleted");
         cardDetected = false;
-        if(strcmp(tagValue, tagValueAux) != 0){
-          postCoffeeCup();
-        }
-        memset(tagValueAux, '\0', 12);
-        strcpy(tagValueAux, tagValue);
         memset(tagValue, '\0', 12);
       }
-    }
+    }*/
     if (Serial1.available() > 0) {
       rfidReadMug();
     }

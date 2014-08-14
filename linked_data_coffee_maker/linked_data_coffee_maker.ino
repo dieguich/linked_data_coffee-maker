@@ -185,6 +185,7 @@ void loop() {
     if(cardDetected && digitalRead(cardInField) == 0){
       delay(200);
       if(digitalRead(cardInField) == 0){
+        //Serial.println("Deleted");
         cardDetected = false;
         memset(tagValue, '\0', 12);
       }

@@ -87,17 +87,15 @@ boolean isFirstTime   = true;    // variable used to control the delay to preven
 String response   = "";          // value returned by the server.
 char   postData[400];            // buffer to store the data to send
 char   consumptionSecsDB[10];    // to store the second consumming energy
-char   consumptionTypeDB[15];    // to store the type of consumption of the coffee maker
+char   consumptionTypeDB[12];    // to store the type of consumption of the coffee maker
 char   organisationID[20];       // organization's abbreviation: e.g.  "UDEUSTO", "UPM", "UGENT", etc.
 char   dateDB[50];               // to store the date when the peak was detected
 char   timeDB[20];               // to store the time when the peak was detected
 char   consumptionWhDB[10];      // to store the energy consumed by the peak detected
 
 /* RFID tags */
-char    tagValue[12];                          // to strore the RFID tag read 
-char    tagValueAux[12];                       // to strore a copy of the the RFID tag read  
-boolean cardDetected = false;                  // to detect if the mug has been detected or not
-boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
+char    tagValue[12];                               // to strore the RFID tag read 
+boolean cardInField       = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
 
 /* LEDs to know the status */
 uint8_t ledPin       = STATUS_PIN; // pin for feedback
@@ -115,6 +113,7 @@ void setup() {
   delay(500);
   
   Serial1.begin(9600);
+  //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
   
 #if ECHO_TO_SERIAL  
   Serial.begin(9600); 
@@ -173,7 +172,7 @@ void loop() {
     strcpy(dateDB, printDate());
     memset(timeDB, '\0', 20);
     strcpy(timeDB, printTime());
-    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");  
+    POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, "RESET", "0", "0", "-");
     delay(100);
     wdt_reset();
     delay(100);
@@ -190,18 +189,6 @@ void loop() {
   }
   if(isStable){
     controlCoffeMade(currentToMeasure);            // to read the the RMS current flow [0..30A]
-    if(cardDetected && digitalRead(cardInField) == 0){
-      delay(200);
-      if(digitalRead(cardInField) == 0){
-        cardDetected = false;
-        if(strcmp(tagValue, tagValueAux) != 0){
-          postCoffeeCup();
-        }
-        memset(tagValueAux, '\0', 12);
-        strcpy(tagValueAux, tagValue);
-        memset(tagValue, '\0', 12);
-      }
-    }
     if (Serial1.available() > 0) {
       rfidReadMug();
     }

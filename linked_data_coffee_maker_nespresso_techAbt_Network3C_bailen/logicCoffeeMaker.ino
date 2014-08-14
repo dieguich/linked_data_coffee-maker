@@ -36,11 +36,11 @@ void controlCoffeMade(float readCurrentValue){
   }
   
   
-  if((readCurrentValue <= 0.4) && (currentIsFlowing)){  // if the machine is idle and it was working in the previous loop.  
-      delay(TIME_OF_DELAY);                                      // wait a second to know if is a false stop 
-      if (emonInstance.calcIrms(EMON_INSTANCE_VALUE) <= 0.4){        
+  if((readCurrentValue <= 0.1) && (currentIsFlowing)){  // if the machine is idle and it was working in the previous loop.  
+      delay(2500);                                      // wait a second to know if is a false stop 
+      if (emonInstance.calcIrms(EMON_INSTANCE_VALUE) <= 0.1){        
         currentIsFlowing = false;               // the state of the machine shift to idle
-        timeOn = millis()-timeCount-TIME_OF_DELAY;            // compute the time used to prepare a coffee (2secons to establish the current to 0 after a hot drink made) 
+        timeOn = millis()-timeCount-2500;            // compute the time used to prepare a coffee (2secons to establish the current to 0 after a hot drink made) 
         setType();
         memset(consumptionWhDB, '\0', 10);
         floatToString(consumptionWhDB, ((auxEnergy/nLoopPower)*(timeOn/3600000.0)), 2, 3);        
@@ -51,19 +51,14 @@ void controlCoffeMade(float readCurrentValue){
         
         if(prevWasCoffee){
           if(strlen(tagValue) > 10){
-            //Serial.print("BIGGER THAN 10: ");
-            //Serial.println(tagValue);
             tagValue[10] = '\0';
-          }  
-          //Serial.print("to send: "); 
-          //Serial.println(tagValue);
+          }   
           POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, tagValue);
-          //memset(tagValue, '\0', 12);
-          
         #if ECHO_TO_SERIAL                                 
           Serial.print("send: ");
           Serial.println(tagValue);          
         #endif
+        memset(tagValue, '\0', 12);
         }
         else{
         #if ECHO_TO_SERIAL                                 

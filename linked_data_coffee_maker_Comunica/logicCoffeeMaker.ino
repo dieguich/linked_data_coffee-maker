@@ -54,11 +54,22 @@ void controlCoffeMade(float readCurrentValue){
             //Serial.print("BIGGER THAN 10: ");
             //Serial.println(tagValue);
             tagValue[10] = '\0';
-          }  
-          //Serial.print("to send: "); 
-          //Serial.println(tagValue);
+          } 
+          if(millis() < timeExpireCapsule){
+            timeExpireCapsule = 0;
+            strcpy(tagValue, tagValue2Capsule);
+            memset(tagValue2Capsule, '\0', 12);
+          }
+          
           POSTrequest(organisationID, DEVICE_TYPE, dateDB, timeDB, consumptionTypeDB, consumptionSecsDB, consumptionWhDB, tagValue);
-          //memset(tagValue, '\0', 12);
+          if(firstCapsule){
+            timeExpireCapsule  = millis() + 90000;
+            firstCapsule = false;
+            memset(tagValue2Capsule, '\0', 12);
+            strcpy(tagValue2Capsule, tagValue);
+          }
+          memset(tagValue, '\0', 12);
+          
           
         #if ECHO_TO_SERIAL                                 
           Serial.print("send: ");
