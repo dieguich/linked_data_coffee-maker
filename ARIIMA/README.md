@@ -3,7 +3,7 @@ ARIIMA
 
 This repository contains the ARIIMA architecture used to generate and process the weekly usage forecast for Eco-aware Smart Everyday Things.
 Different objects are able to ask them weekly energy working mode through an iBoard Pro (a more complete Arduino Board with Ethernet shield and RTC clock embedded).
-A RESTful server processes the request (GET) and sent the prediction to the object-client.
+A RESTful server processes the request (GET) and send the prediction to the object-client.
 
 ##Installation
 
