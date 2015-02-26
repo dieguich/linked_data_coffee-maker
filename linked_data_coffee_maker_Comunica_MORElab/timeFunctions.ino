@@ -22,7 +22,7 @@ void getUnixTime(){
   if ( udp.parsePacket() ) {  
     udp.read(pb,NTP_PACKET_SIZE);  // read the packet into the buffer
     unixTime = getTimefromNTP(pb); //if the time provided by the UTP server is different to yours, please add or subtract the corresponding hours in secs, e.g. unixTime+=3600; 
-    unixTime+=3600; 
+    //unixTime+=3600; 
   }
   else
   {

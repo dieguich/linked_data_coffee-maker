@@ -1,3 +1,9 @@
+/**
+Last modificaton date: 25/02/2015
+Modification_1: Added code to prevent against Ethernet failures. Code added at setup() time.
+Modification_2:     //unixTime+=3600;  (Commented - we do not need add 1 hour anymore...till march)
+**/
+
 #include <avr/pgmspace.h>
 #include <avr/wdt.h> 
 #include <Udp.h>
@@ -109,8 +115,15 @@ uint8_t ledPin       = STATUS_PIN; // pin for feedback
 ***********/
 void setup() {
    
+  
+   //Important  Iboard Pro code to restart the Ethernet appropriately 
+  pinMode(47,OUTPUT);  //RESET PIN
+  digitalWrite(47, LOW);
+  delay(500);
+  digitalWrite(47, HIGH); 
+  delay(500);
+  
   Serial1.begin(9600);
-  //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
   
 #if ECHO_TO_SERIAL  
   Serial.begin(9600); 
@@ -178,7 +191,10 @@ void loop() {
   //wdt_reset();                           // Watch dog code to detect if arduino is blocked anytime
   delay(25);
   float currentToMeasure = emonInstance.calcIrms(EMON_INSTANCE_VALUE);
+#if ECHO_TO_SERIAL  
   Serial.println(currentToMeasure);
+#endif 
+
   if(isStable == false && currentToMeasure < 0.40){  // wait until the current sensor is stable.
     isStable = true;
     delay(200);

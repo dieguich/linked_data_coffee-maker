@@ -1,3 +1,8 @@
+/**
+Last modificaton date: 25/02/2015
+Modification_1:     //unixTime+=3600;  (Commented - we do not need add 1 hour anymore...till march)
+**/
+
 #include <avr/pgmspace.h>
 #include <avr/wdt.h> 
 #include <Udp.h>
@@ -106,7 +111,14 @@ uint8_t ledPin       = STATUS_PIN; // pin for feedback
   SETUP
 ***********/
 void setup() {
-   
+  
+   //Important  Iboard Pro code to restart the Ethernet appropriately 
+  pinMode(47,OUTPUT);  //RESET PIN
+  digitalWrite(47, LOW);
+  delay(500);
+  digitalWrite(47, HIGH); 
+  delay(500); 
+  
   Serial1.begin(9600);
   //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
   
