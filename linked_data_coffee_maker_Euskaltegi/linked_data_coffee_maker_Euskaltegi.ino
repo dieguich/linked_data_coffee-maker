@@ -2,8 +2,8 @@
 Last modificaton date: 26/02/2015
 Modification_1: Added code to prevent against Ethernet failures. Code added at setup() time.
 Modification_2:     //unixTime+=3600;  (Commented - we do not need add 1 hour anymore...till march)
-Modification_3: Bye bye RFID
 **/
+
 #include <avr/pgmspace.h>
 #include <avr/wdt.h> 
 #include <Udp.h>
@@ -50,11 +50,11 @@ char       bufferINIfile[bufferLen];
 IniFile    ini(filename);                      // object to access the config file
 
 /*  Current */
-uint8_t        currentMeasurePin = CURRENT_PIN; // pin to measure the current flow
-boolean        currentIsFlowing  = false;       // to know if the previous state of the current measure
-EnergyMonitor  emonInstance;                    // a emonLib instance to read current Values fron current CT sensor
-float          currenValueMean = 0.0;
 
+uint8_t           currentMeasurePin = CURRENT_PIN; // pin to measure the current flow
+boolean        currentIsFlowing     = false;       // to know if the previous state of the current measure a emonLib instance to read current Values fron current CT sensor
+float               currenValueMean    = 0.0;
+EnergyMonitor  emonInstance;   
 
 /*Related with NTP server and UDP setup for TxRx */
 unsigned long unixTime      = 0;               // variable to store the Unix NTP time retrieved form NTP server
@@ -81,15 +81,16 @@ unsigned long countStart        = 0;        // to count when a peak has started
 unsigned long lastPeak          = 0;        // this variable is to store when the last peak has been triggered (aim: figure out what kind of peak is [peak, coffee or S. Time.]) 
 unsigned long timeCount         = 0;        // the timestamp to store the begining of a peak, coffee or S. Time.
 unsigned long totalTimeOn       = 0;        // the time that the coffee machine was operating (during the cicle of 24h)
+unsigned long timeExpireCapsule = 0;        // XXX
 
 
 /* Testers */
-boolean isStartTime   = false;   // to know if the detected peak belong to [StartTime or Stand-by]
+boolean isStartTime        = false;   // to know if the detected peak belong to [StartTime or Stand-by]
 boolean prevWasCoffee = false;   // test if the last peak was a coffe (to distinguish between coffee and peak)
-boolean wasOff        = true;    // test if the coffe maker was previously switch off.
-boolean isStable      = false;   // variable to calibrate the current sensor. Wait time until stable.
-boolean isCoffee      = false;   
-boolean tenTimesRead  = false;
+boolean wasOff                = true;    // test if the coffe maker was previously switch off.
+boolean isStable             = false;   // variable to calibrate the current sensor. Wait time until stable.
+boolean firstCapsule      = false;   // XXXX
+boolean isCoffee             = false;   
 
 /* NoSQL DataBase */
 String response   = "";          // value returned by the server.
@@ -103,6 +104,7 @@ char   consumptionWhDB[10];      // to store the energy consumed by the peak det
 
 /* RFID tags */
 char    tagValue[12];                          // to strore the RFID tag read 
+char    tagValue2Capsule[12];                  // XXXX
 boolean cardDetected = false;                  // to detect if the mug has been detected or not
 boolean cardInField  = MUG_IN_DEVICE_PIN;      // pin to sense when the coffee maker is placed on the appliance.
 
@@ -114,14 +116,14 @@ uint8_t ledPin       = STATUS_PIN; // pin for feedback
   SETUP
 ***********/
 void setup() {
- 
+   
+  
   //Important  Iboard Pro code to restart the Ethernet appropriately 
   pinMode(47,OUTPUT);  //RESET PIN
   digitalWrite(47, LOW);
   delay(500);
   digitalWrite(47, HIGH); 
   delay(500);
-  
   
   Serial1.begin(9600);
   //wdt_disable();         // Watch dog code to detect if arduino is blocked anytime
@@ -134,7 +136,7 @@ void setup() {
   pinMode(SD_SELECT,       OUTPUT);
   pinMode(ETHERNET_SELECT, OUTPUT);
   pinMode(ledPin,          OUTPUT);
-  pinMode(currentMeasurePin, INPUT);   // sets the analog pin as input (current measure throug the coffe machine plug -mains)  
+  pinMode(currentMeasurePin, INPUT);   // sets the analog pin as input (current measure throug the coffe machine plug -mains)*/   
   pinMode(cardInField,       INPUT);
   
   digitalWrite(ledPin,          LOW);
@@ -157,7 +159,7 @@ void setup() {
 #if ECHO_TO_SERIAL  
    Serial.println("Working");
 #endif
-  
+
   emonInstance.current(currentMeasurePin, CALIBRATION);    // sets the Pin from and the calibration to read current Values.
   
   
@@ -192,7 +194,7 @@ void loop() {
   //wdt_reset();                           // Watch dog code to detect if arduino is blocked anytime
   delay(25);
   float currentToMeasure = emonInstance.calcIrms(EMON_INSTANCE_VALUE);
-  
+  Serial.println(currentToMeasure);
   if(isStable == false && currentToMeasure < 0.40){  // wait until the current sensor is stable.
     isStable = true;
     delay(200);
@@ -202,12 +204,13 @@ void loop() {
     /*if(cardDetected && digitalRead(cardInField) == 0){
       delay(200);
       if(digitalRead(cardInField) == 0){
+        Serial.println("Deleted");
         cardDetected = false;
         memset(tagValue, '\0', 12);
       }
     }*/
-    //if (Serial1.available() > 0) {
-    //  rfidReadMug();
-    //}
+    if (Serial1.available() > 0) {
+      rfidReadMug();
+    }
   }
 }

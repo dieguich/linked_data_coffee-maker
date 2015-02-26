@@ -258,7 +258,3 @@ void printType(const char *str){
     Serial.print('|');
   #endif
 }
-
-
-
-

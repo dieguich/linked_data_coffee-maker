@@ -1,4 +1,38 @@
 
+/**
+  The function shows and computes energy consumptions by each of the peak detected.
+**/
+void accumulatedEnergyByPeak(){
+  
+  switch (setType()){
+    case 1:{
+      eCoffees += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                             
+      Serial.print("Consumed by Coffees: ");
+      Serial.println(eCoffees, 2);
+  #endif                    
+      break;
+    }
+    case 2:{      
+      eStartTimes += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                                         
+      Serial.print("Consumed by S. time: ");
+      Serial.println(eStartTimes, 2);
+  #endif            
+      break;
+    }
+    case 3:{
+      ePeaks += (auxEnergy/nLoopPower)*(timeOn/3600000.0);
+  #if ECHO_TO_SERIAL                                                         
+      Serial.print("Consumed by Peaks: ");
+      Serial.println(ePeaks, 2);
+  #endif            
+      break;
+    }
+  }    
+}
+
+
 
 /**
   This function is many fold:

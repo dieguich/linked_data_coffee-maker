@@ -1,5 +1,5 @@
 /**
-Last modificaton date: 25/02/2015
+Last modificaton date: 26/02/2015
 Modification_1: Added code to prevent against Ethernet failures. Code added at setup() time.
 Modification_2:     //unixTime+=3600;  (Commented - we do not need add 1 hour anymore...till march)
 **/
@@ -144,6 +144,9 @@ void setup() {
   setNetworkAddresses();
   getUnixTime();
   if(!rtcOnTime){
+#if ECHO_TO_SERIAL  
+  Serial.print("Setting  RTC Time ");  
+#endif 
     setRTCTime();
   }
   
@@ -156,7 +159,6 @@ void setup() {
 #if ECHO_TO_SERIAL  
    Serial.println("Working");
 #endif
-  
   emonInstance.current(currentMeasurePin, CALIBRATION);    // sets the Pin from and the calibration to read current Values.
   
   
@@ -208,9 +210,9 @@ void loop() {
         cardDetected = false;
         memset(tagValue, '\0', 12);
       }
-    }
-    if (Serial1.available() > 0) {
-      rfidReadMug();
     }*/
+    //if (Serial1.available() > 0) {
+    //  rfidReadMug();
+    //}
   }
 }

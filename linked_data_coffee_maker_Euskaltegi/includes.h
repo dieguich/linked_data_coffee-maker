@@ -18,7 +18,7 @@
 #define MUG_IN_DEVICE_PIN       41
 #define CURRENT_PIN             A15
 
-#define ECHO_TO_SERIAL          1                 // echo data to serial port (DEBUG mode)
+#define ECHO_TO_SERIAL          0                 // echo data to serial port (DEBUG mode)
 
 
 /* Variables to store in the Flash memory (save SRAM space): PROGMEM */
